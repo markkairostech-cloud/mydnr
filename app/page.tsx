@@ -1,65 +1,149 @@
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+    <main className="min-h-screen bg-white">
+      <div className="max-w-5xl mx-auto px-6 py-16">
+
+        {/* Hero Section */}
+        <section className="text-center mb-16">
+
+          <div className="mb-6 flex justify-center">
             <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+              src="/images/mydnr-logo.png"
+              alt="MyDNR South Africa"
+              width={300}
+              height={300}
+              priority
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+          </div>
+
+          <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
+            MyDNR South Africa
+          </h1>
+
+          <h2 className="text-xl md:text-2xl font-light text-slate-700 mb-8">
+            A secure place to record your wishes.
+          </h2>
+
+          <p className="text-lg text-slate-600 max-w-3xl mx-auto leading-relaxed">
+            MyDNR helps individuals and families securely register,
+            verify and retrieve Do Not Resuscitate (DNR) requests
+            for when they may be needed.
+          </p>
+
+        </section>
+
+        {/* Information Panel */}
+        <section className="bg-slate-50 rounded-3xl p-10 md:p-12 mb-16 text-center">
+
+          <h3 className="text-2xl font-semibold text-slate-800 mb-6">
+            Decisions regarding end-of-life care are deeply personal.
+          </h3>
+
+          <p className="text-lg text-slate-600 max-w-3xl mx-auto leading-relaxed">
+            MyDNR has been designed to provide a respectful and secure
+            way to store and retrieve DNR documentation while protecting
+            personal information.
+          </p>
+
+        </section>
+
+        {/* Service Cards */}
+        <section className="grid md:grid-cols-3 gap-6">
+
+          {/* Register */}
+          <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm flex flex-col">
+
+            <div className="text-4xl mb-4">🛡️</div>
+
+            <h3 className="text-xl font-semibold text-slate-900 mb-3">
+              Register a DNR Request
+            </h3>
+
+            <p className="text-slate-600 mb-6">
+              Securely register and store a signed DNR request together
+              with supporting identification documentation.
+            </p>
+
+            <p className="font-semibold text-slate-800 mb-6">
+              Registration Fee: R100
+            </p>
+
+            <div className="mt-auto">
+              <Link
+                href="/register"
+                className="block w-full bg-slate-900 text-white py-3 rounded-xl text-center"
+              >
+                Register
+              </Link>
+            </div>
+
+          </div>
+
+          {/* Check */}
+          <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm flex flex-col">
+
+            <div className="text-4xl mb-4">🔍</div>
+
+            <h3 className="text-xl font-semibold text-slate-900 mb-3">
+              Check if a DNR Exists
+            </h3>
+
+            <p className="text-slate-600 mb-6">
+              Verify whether a DNR record has been registered for a
+              South African ID Number.
+            </p>
+
+            <p className="font-semibold text-slate-800 mb-6">
+              Free Service
+            </p>
+
+            <div className="mt-auto">
+              <button className="w-full bg-slate-900 text-white py-3 rounded-xl">
+                Check
+              </button>
+            </div>
+
+          </div>
+
+          {/* Request */}
+          <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm flex flex-col">
+
+            <div className="text-4xl mb-4">⬇️</div>
+
+            <h3 className="text-xl font-semibold text-slate-900 mb-3">
+              Request a Registered DNR Document
+            </h3>
+
+            <p className="text-slate-600 mb-6">
+              Request and download a registered DNR document.
+            </p>
+
+            <p className="font-semibold text-slate-800 mb-6">
+              Retrieval Fee: R100
+            </p>
+
+            <div className="mt-auto">
+              <button className="w-full bg-slate-900 text-white py-3 rounded-xl">
+                Request
+              </button>
+            </div>
+
+          </div>
+
+        </section>
+
+        {/* Footer */}
+        <footer className="mt-20 text-center text-sm text-slate-500">
+          <p>
+            Secure registration, verification and retrieval of
+            Do Not Resuscitate (DNR) requests in South Africa.
+          </p>
+        </footer>
+
+      </div>
+    </main>
   );
 }
