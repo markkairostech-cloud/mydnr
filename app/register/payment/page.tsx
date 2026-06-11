@@ -3,9 +3,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function PaymentPage() {
+  const router = useRouter();
+
   const [registration, setRegistration] = useState<any>(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const data = localStorage.getItem("mydnr-registration");
@@ -15,11 +19,48 @@ export default function PaymentPage() {
     }
   }, []);
 
+  const handleRegistration = async () => {
+    if (!registration) {
+      alert("Registration data not found.");
+      return;
+    }
+
+    try {
+      setSaving(true);
+
+      const response = await fetch("/api/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(registration),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result.error || "Failed to save registration."
+        );
+      }
+
+      router.push("/register/complete");
+    } catch (error: any) {
+      console.error(error);
+
+      alert(
+        error?.message ||
+          "Failed to save registration."
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <main className="min-h-screen bg-white">
       <div className="max-w-3xl mx-auto px-6 py-16">
 
-        {/* Logo */}
         <div className="flex justify-center mb-6">
           <Image
             src="/images/mydnr-logo.png"
@@ -30,7 +71,6 @@ export default function PaymentPage() {
           />
         </div>
 
-        {/* Page Heading */}
         <div className="text-center mb-10">
           <h1 className="text-4xl font-bold text-slate-900 mb-4">
             Register a DNR Request
@@ -41,16 +81,13 @@ export default function PaymentPage() {
           </p>
         </div>
 
-        {/* Progress Bar */}
         <div className="mb-12">
           <div className="w-full bg-slate-200 rounded-full h-3">
             <div className="bg-slate-900 h-3 rounded-full w-full"></div>
           </div>
         </div>
 
-        {/* Information Panel */}
         <div className="bg-slate-50 rounded-3xl p-8 mb-10 text-center">
-
           <h2 className="text-2xl font-semibold text-slate-800 mb-4">
             Payment
           </h2>
@@ -59,12 +96,9 @@ export default function PaymentPage() {
             A registration fee is required to complete registration
             and securely store the participant's DNR record.
           </p>
-
         </div>
 
-        {/* Registration Summary */}
         <div className="bg-slate-50 rounded-3xl p-8 mb-10">
-
           <h3 className="text-xl font-semibold text-slate-800 mb-6">
             Registration Summary
           </h3>
@@ -73,8 +107,6 @@ export default function PaymentPage() {
             <div className="space-y-5">
 
               <div>
-                
-
                 <p className="font-semibold text-slate-800">
                   {registration.fullName}
                 </p>
@@ -122,12 +154,9 @@ export default function PaymentPage() {
 
             </div>
           )}
-
         </div>
 
-        {/* Fee Panel */}
         <div className="border border-slate-200 rounded-3xl p-10 mb-10 text-center">
-
           <p className="text-slate-600 mb-3">
             Registration Fee
           </p>
@@ -144,12 +173,9 @@ export default function PaymentPage() {
             Your registration will only be processed once payment
             has been successfully received.
           </p>
-
         </div>
 
-        {/* Important Note */}
         <div className="bg-slate-50 rounded-3xl p-8 mb-10">
-
           <h3 className="text-xl font-semibold text-slate-800 mb-4">
             Before You Continue
           </h3>
@@ -160,10 +186,8 @@ export default function PaymentPage() {
             available through the MyDNR registration, verification
             and retrieval service.
           </p>
-
         </div>
 
-        {/* Navigation Buttons */}
         <div className="flex gap-4">
 
           <Link
@@ -173,12 +197,15 @@ export default function PaymentPage() {
             Back
           </Link>
 
-          <Link
-            href="/register/complete"
+          <button
+            onClick={handleRegistration}
+            disabled={saving}
             className="w-2/3 bg-slate-900 text-white py-4 rounded-xl font-medium text-center"
           >
-            Complete Registration & Pay R100
-          </Link>
+            {saving
+              ? "Saving Registration..."
+              : "Complete Registration & Pay R100"}
+          </button>
 
         </div>
 

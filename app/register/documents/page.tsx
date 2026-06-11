@@ -1,5 +1,5 @@
 "use client";
-
+import { supabase } from "@/lib/supabase";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
@@ -10,16 +10,54 @@ export default function RegisterPage() {
 
   const [idDocument, setIdDocument] = useState<File | null>(null);
   const [dnrDocument, setDnrDocument] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
 
-  const handleContinue = () => {
+  const uploadFile = async (
+  file: File,
+  bucket: string
+) => {
+  const fileName = `${Date.now()}-${file.name}`;
+
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .upload(fileName, file);
+
+  if (error) {
+    throw error;
+  }
+
+  return data.path;
+};
+
+  const handleContinue = async () => {
+    if (!idDocument || !dnrDocument) {
+      alert("Please upload both documents.");
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      const idDocumentPath = await uploadFile(
+      idDocument,
+      "id-documents"
+    );
+
+    const dnrDocumentPath = await uploadFile(
+      dnrDocument,
+      "dnr-documents"
+    );
+
     const existingData = JSON.parse(
       localStorage.getItem("mydnr-registration") || "{}"
     );
 
     const updatedData = {
       ...existingData,
-      idDocumentName: idDocument?.name || "",
-      dnrDocumentName: dnrDocument?.name || "",
+      idDocumentName: idDocument.name,
+      dnrDocumentName: dnrDocument.name,
+      idDocumentPath,
+      dnrDocumentPath,
     };
 
     localStorage.setItem(
@@ -27,9 +65,20 @@ export default function RegisterPage() {
       JSON.stringify(updatedData)
     );
 
-    router.push("/register/consent");
-  };
+        router.push("/register/consent");
 
+    } catch (error: any) {
+      console.error("UPLOAD ERROR:", error);
+
+      alert(
+        error?.message ||
+        JSON.stringify(error) ||
+        "Document upload failed."
+      );
+    } finally {
+      setUploading(false);
+    }
+  };
   return (
     <main className="min-h-screen bg-white">
       <div className="max-w-3xl mx-auto px-6 py-16">
