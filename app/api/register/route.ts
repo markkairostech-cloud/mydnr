@@ -7,7 +7,7 @@ export async function POST(req: Request) {
 
     const supabase = getSupabaseAdmin();
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("dnr_registrations")
       .insert([
         {
@@ -21,7 +21,9 @@ export async function POST(req: Request) {
           id_document_path: body.idDocumentPath,
           dnr_document_path: body.dnrDocumentPath,
         },
-      ]);
+      ])
+      .select()
+      .single();
 
     if (error) {
       throw error;
@@ -29,6 +31,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
+      registrationId: data.id,
     });
   } catch (error: any) {
     console.error("REGISTER ERROR:", error);
