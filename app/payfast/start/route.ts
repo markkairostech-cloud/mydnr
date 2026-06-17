@@ -59,7 +59,16 @@ export async function POST(req: Request) {
       body?.saIdNumber || ""
     ).trim();
 
-    if (!fullName || !email || !saIdNumber) {
+    const registrationId = String(
+      body?.registrationId || ""
+    ).trim();
+
+    if (
+      !registrationId ||
+      !fullName ||
+      !email ||
+      !saIdNumber
+    ) {
       return new NextResponse(
         "Missing participant details",
         { status: 400 }
@@ -101,7 +110,7 @@ export async function POST(req: Request) {
 
     const amount = "100.00";
 
-    const m_payment_id = `mydnr_${Date.now()}`;
+    const m_payment_id = registrationId;
 
     const return_url =
       `${siteUrl}/register/complete`;
