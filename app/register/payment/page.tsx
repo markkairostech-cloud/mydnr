@@ -3,11 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 
 export default function PaymentPage() {
-  const router = useRouter();
-
   const [registration, setRegistration] = useState<any>(null);
   const [saving, setSaving] = useState(false);
 
@@ -28,7 +25,8 @@ export default function PaymentPage() {
     try {
       setSaving(true);
 
-      const response = await fetch("/api/register", {
+      // Step 1: Create the DNR registration
+      const registerResponse = await fetch("/api/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -36,21 +34,95 @@ export default function PaymentPage() {
         body: JSON.stringify(registration),
       });
 
-      const result = await response.json();
+      const registerResult = await registerResponse.json();
 
-      if (!response.ok) {
+      if (!registerResponse.ok) {
         throw new Error(
-          result.error || "Failed to save registration."
+          registerResult.error ||
+            "Failed to save registration."
         );
       }
 
-      router.push("/register/complete");
+      const registrationId =
+        registerResult.registrationId;
+
+      if (!registrationId) {
+        throw new Error(
+          "Registration ID was not returned."
+        );
+      }
+
+      // Step 2: Create the PayFast payment request
+      const payfastResponse = await fetch(
+        "/api/payfast/start",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            registrationId,
+            fullName: registration.fullName,
+            email: registration.email,
+            saIdNumber: registration.saIdNumber,
+          }),
+        }
+      );
+
+      if (!payfastResponse.ok) {
+        const errorText =
+          await payfastResponse.text();
+
+        throw new Error(
+          errorText ||
+            "Failed to create PayFast payment."
+        );
+      }
+
+      const payfastData =
+        await payfastResponse.json();
+
+      if (
+        !payfastData.payfastUrl ||
+        !payfastData.fields
+      ) {
+        throw new Error(
+          "Invalid PayFast payment response."
+        );
+      }
+
+      // Step 3: Build a hidden form and submit it to PayFast
+      const form =
+        document.createElement("form");
+
+      form.method = "POST";
+      form.action = payfastData.payfastUrl;
+
+      Object.entries(
+        payfastData.fields
+      ).forEach(([key, value]) => {
+        const input =
+          document.createElement("input");
+
+        input.type = "hidden";
+        input.name = key;
+        input.value = String(value);
+
+        form.appendChild(input);
+      });
+
+      document.body.appendChild(form);
+
+      form.submit();
     } catch (error: any) {
-      console.error(error);
+      console.error(
+        "PAYMENT START ERROR:",
+        error
+      );
 
       alert(
         error?.message ||
-          "Failed to save registration."
+          "Failed to start payment."
       );
     } finally {
       setSaving(false);
@@ -94,7 +166,7 @@ export default function PaymentPage() {
 
           <p className="text-slate-600 leading-relaxed">
             A registration fee is required to complete registration
-            and securely store the participant's DNR record.
+            and securely store the participant&apos;s DNR record.
           </p>
         </div>
 
@@ -162,7 +234,7 @@ export default function PaymentPage() {
           </p>
 
           <p className="text-5xl font-bold text-slate-900 mb-3">
-            R100
+            R25
           </p>
 
           <p className="text-slate-500 mb-4">
@@ -181,7 +253,7 @@ export default function PaymentPage() {
           </h3>
 
           <p className="text-slate-600 leading-relaxed">
-            Once payment has been completed, the participant's
+            Once payment has been completed, the participant&apos;s
             DNR documentation will be securely stored and made
             available through the MyDNR registration, verification
             and retrieval service.
@@ -200,11 +272,11 @@ export default function PaymentPage() {
           <button
             onClick={handleRegistration}
             disabled={saving}
-            className="w-2/3 bg-slate-900 text-white py-4 rounded-xl font-medium text-center"
+            className="w-2/3 bg-slate-900 text-white py-4 rounded-xl font-medium text-center disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {saving
-              ? "Saving Registration..."
-              : "Complete Registration & Pay R100"}
+              ? "Connecting to PayFast..."
+              : "Complete Registration & Pay R25"}
           </button>
 
         </div>

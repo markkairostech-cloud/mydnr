@@ -108,7 +108,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const amount = "100.00";
+    const amount = "25.00";
 
     const m_payment_id = registrationId;
 
