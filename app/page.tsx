@@ -13,8 +13,8 @@ export default function Home() {
             <Image
               src="/images/mydnr-logo.png"
               alt="MyDNR South Africa"
-              width={300}
-              height={300}
+              width={450}
+              height={450}
               priority
             />
           </div>
@@ -28,9 +28,10 @@ export default function Home() {
           </h2>
 
           <p className="text-lg text-slate-600 max-w-3xl mx-auto leading-relaxed">
-            MyDNR helps individuals and families securely register,
-            verify and retrieve Do Not Resuscitate (DNR) requests
-            for when they may be needed.
+            MyDNR helps you securely register your Do Not Resuscitate
+            (DNR) request, so your wishes can be verified and your
+            registered DNR document can be accessed by your loved ones
+            when you may not be able to communicate them yourself.
           </p>
 
         </section>
@@ -59,12 +60,13 @@ export default function Home() {
             <div className="text-4xl mb-4">🛡️</div>
 
             <h3 className="text-xl font-semibold text-slate-900 mb-3">
-              Register a DNR Request
+              Register Your DNR Request
             </h3>
 
             <p className="text-slate-600 mb-6">
-              Securely register and store a signed DNR request together
-              with supporting identification documentation.
+              Securely register and store your signed DNR request and
+              supporting identification, so your DNR document can be
+              retrieved when it may be needed.
             </p>
 
             <p className="font-semibold text-slate-800 mb-6">
