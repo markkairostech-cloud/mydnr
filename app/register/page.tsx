@@ -16,6 +16,13 @@ export default function RegisterPage() {
   const [nextOfKinPhone, setNextOfKinPhone] = useState("");
 
   const handleContinue = () => {
+    if (!dateOfBirth) {
+      alert(
+        "Please enter the participant's Date of Birth before continuing."
+      );
+      return;
+    }
+
     const registrationData = {
       fullName,
       saIdNumber,
@@ -74,7 +81,7 @@ export default function RegisterPage() {
           </h2>
 
           <p className="text-slate-600 leading-relaxed">
-            Please provide the participant's details below.
+            Please provide the participant&apos;s details below.
             These details will be used to create and identify
             the DNR record.
           </p>
@@ -118,6 +125,7 @@ export default function RegisterPage() {
               type="date"
               value={dateOfBirth}
               onChange={(e) => setDateOfBirth(e.target.value)}
+              required
               className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-slate-400"
             />
           </div>
