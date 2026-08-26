@@ -3,7 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import {
+  Suspense,
+  useEffect,
+  useState,
+} from "react";
 
 type PaymentState =
   | "checking"
@@ -12,6 +16,59 @@ type PaymentState =
   | "error";
 
 export default function RegistrationCompletePage() {
+  return (
+    <Suspense fallback={<CheckingPayment />}>
+      <RegistrationCompleteContent />
+    </Suspense>
+  );
+}
+
+function CheckingPayment() {
+  return (
+    <main className="min-h-screen bg-white">
+      <div className="max-w-3xl mx-auto px-6 py-16">
+
+        <div className="flex justify-center mb-6">
+          <Image
+            src="/images/mydnr-logo.png"
+            alt="MyDNR South Africa"
+            width={300}
+            height={300}
+            priority
+          />
+        </div>
+
+        <div className="text-center mb-10">
+          <div className="flex justify-center mb-6">
+            <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center">
+              <span className="text-4xl text-slate-700">
+                …
+              </span>
+            </div>
+          </div>
+
+          <h1 className="text-4xl font-bold text-slate-900 mb-4">
+            Confirming Registration
+          </h1>
+
+          <p className="text-slate-600">
+            Confirming your payment...
+          </p>
+        </div>
+
+        <div className="bg-slate-50 rounded-3xl p-10 mb-10 text-center">
+          <p className="text-slate-600 leading-relaxed">
+            Please wait while MyDNR confirms your payment
+            with PayFast. This normally only takes a few
+            moments.
+          </p>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+function RegistrationCompleteContent() {
   const searchParams = useSearchParams();
 
   const registrationId =
@@ -155,6 +212,7 @@ export default function RegistrationCompletePage() {
           </div>
 
           <div className="bg-slate-50 rounded-3xl p-10 mb-10 text-center">
+
             {paymentState === "checking" && (
               <p className="text-slate-600 leading-relaxed">
                 Please wait while MyDNR confirms your
@@ -179,6 +237,7 @@ export default function RegistrationCompletePage() {
                 believe your payment was completed.
               </p>
             )}
+
           </div>
 
           <Link
