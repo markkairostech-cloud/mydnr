@@ -1,9 +1,18 @@
 "use client";
+
 import { supabase } from "@/lib/supabase";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
+const ALLOWED_FILE_TYPES = [
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+];
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -12,22 +21,72 @@ export default function RegisterPage() {
   const [dnrDocument, setDnrDocument] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
 
+  const validateFile = (file: File) => {
+    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+      alert(
+        "Please select a PDF, JPG, JPEG or PNG file."
+      );
+      return false;
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      alert(
+        "Please select a file smaller than 10 MB."
+      );
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleIdDocumentChange = (
+    file: File | null
+  ) => {
+    if (!file) {
+      setIdDocument(null);
+      return;
+    }
+
+    if (!validateFile(file)) {
+      setIdDocument(null);
+      return;
+    }
+
+    setIdDocument(file);
+  };
+
+  const handleDnrDocumentChange = (
+    file: File | null
+  ) => {
+    if (!file) {
+      setDnrDocument(null);
+      return;
+    }
+
+    if (!validateFile(file)) {
+      setDnrDocument(null);
+      return;
+    }
+
+    setDnrDocument(file);
+  };
+
   const uploadFile = async (
-  file: File,
-  bucket: string
-) => {
-  const fileName = `${Date.now()}-${file.name}`;
+    file: File,
+    bucket: string
+  ) => {
+    const fileName = `${Date.now()}-${file.name}`;
 
-  const { data, error } = await supabase.storage
-    .from(bucket)
-    .upload(fileName, file);
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(fileName, file);
 
-  if (error) {
-    throw error;
-  }
+    if (error) {
+      throw error;
+    }
 
-  return data.path;
-};
+    return data.path;
+  };
 
   const handleContinue = async () => {
     if (!idDocument || !dnrDocument) {
@@ -39,33 +98,33 @@ export default function RegisterPage() {
 
     try {
       const idDocumentPath = await uploadFile(
-      idDocument,
-      "id-documents"
-    );
+        idDocument,
+        "id-documents"
+      );
 
-    const dnrDocumentPath = await uploadFile(
-      dnrDocument,
-      "dnr-documents"
-    );
+      const dnrDocumentPath = await uploadFile(
+        dnrDocument,
+        "dnr-documents"
+      );
 
-    const existingData = JSON.parse(
-      localStorage.getItem("mydnr-registration") || "{}"
-    );
+      const existingData = JSON.parse(
+        localStorage.getItem("mydnr-registration") || "{}"
+      );
 
-    const updatedData = {
-      ...existingData,
-      idDocumentName: idDocument.name,
-      dnrDocumentName: dnrDocument.name,
-      idDocumentPath,
-      dnrDocumentPath,
-    };
+      const updatedData = {
+        ...existingData,
+        idDocumentName: idDocument.name,
+        dnrDocumentName: dnrDocument.name,
+        idDocumentPath,
+        dnrDocumentPath,
+      };
 
-    localStorage.setItem(
-      "mydnr-registration",
-      JSON.stringify(updatedData)
-    );
+      localStorage.setItem(
+        "mydnr-registration",
+        JSON.stringify(updatedData)
+      );
 
-        router.push("/register/consent");
+      router.push("/register/consent");
 
     } catch (error: any) {
       console.error("UPLOAD ERROR:", error);
@@ -79,6 +138,7 @@ export default function RegisterPage() {
       setUploading(false);
     }
   };
+
   return (
     <main className="min-h-screen bg-white">
       <div className="max-w-3xl mx-auto px-6 py-16">
@@ -119,7 +179,7 @@ export default function RegisterPage() {
           </h2>
 
           <p className="text-slate-600 leading-relaxed">
-            Please upload a copy of the participant's identification
+            Please upload a copy of the participant&apos;s identification
             document and a signed DNR request document.
           </p>
         </div>
@@ -142,14 +202,16 @@ export default function RegisterPage() {
             </p>
 
             <p className="text-slate-500 text-sm mb-4">
-              South African ID Card, ID Book or Passport
+              PDF, JPG, JPEG or PNG — maximum 10 MB
             </p>
 
             <input
               type="file"
               accept=".pdf,.jpg,.jpeg,.png"
               onChange={(e) =>
-                setIdDocument(e.target.files?.[0] || null)
+                handleIdDocumentChange(
+                  e.target.files?.[0] || null
+                )
               }
               className="mt-2 block w-full text-sm text-slate-500"
             />
@@ -182,14 +244,16 @@ export default function RegisterPage() {
             </p>
 
             <p className="text-slate-500 text-sm mb-4">
-              PDF, JPG or PNG
+              PDF, JPG, JPEG or PNG — maximum 10 MB
             </p>
 
             <input
               type="file"
               accept=".pdf,.jpg,.jpeg,.png"
               onChange={(e) =>
-                setDnrDocument(e.target.files?.[0] || null)
+                handleDnrDocumentChange(
+                  e.target.files?.[0] || null
+                )
               }
               className="mt-2 block w-full text-sm text-slate-500"
             />
@@ -216,9 +280,13 @@ export default function RegisterPage() {
             signed and uploaded as part of this registration process.
           </p>
 
-          <button className="bg-slate-900 text-white px-8 py-3 rounded-xl">
+          <a
+            href="/templates/dnr-template.pdf"
+            download
+            className="inline-block bg-slate-900 text-white px-8 py-3 rounded-xl"
+          >
             Download DNR Template
-          </button>
+          </a>
 
         </div>
 
@@ -234,9 +302,12 @@ export default function RegisterPage() {
 
           <button
             onClick={handleContinue}
-            className="w-2/3 bg-slate-900 text-white py-4 rounded-xl text-center"
+            disabled={uploading}
+            className="w-2/3 bg-slate-900 text-white py-4 rounded-xl text-center disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            Continue to Consent & Acknowledgement
+            {uploading
+              ? "Uploading Documents..."
+              : "Continue to Consent & Acknowledgement"}
           </button>
 
         </div>
