@@ -18,21 +18,29 @@ export default function DocumentRequestCompletePage() {
     "Confirming your payment..."
   );
 
+  const [requestId, setRequestId] =
+    useState("");
+
+  const [downloading, setDownloading] =
+    useState(false);
+
   useEffect(() => {
     const params = new URLSearchParams(
       window.location.search
     );
 
-    const requestId =
+    const requestIdFromUrl =
       params.get("requestId");
 
-    if (!requestId) {
+    if (!requestIdFromUrl) {
       setPaymentState("error");
       setMessage(
         "We could not identify this document request."
       );
       return;
     }
+
+    setRequestId(requestIdFromUrl);
 
     let attempts = 0;
     const maxAttempts = 10;
@@ -47,7 +55,7 @@ export default function DocumentRequestCompletePage() {
 
         const response = await fetch(
           `/api/document-request/status?requestId=${encodeURIComponent(
-            requestId
+            requestIdFromUrl
           )}`,
           {
             cache: "no-store",
@@ -135,6 +143,58 @@ export default function DocumentRequestCompletePage() {
       }
     };
   }, []);
+
+  const handleDownload = async () => {
+    if (!requestId) {
+      alert(
+        "Document request ID could not be found."
+      );
+      return;
+    }
+
+    try {
+      setDownloading(true);
+
+      const response = await fetch(
+        `/api/document-request/download?requestId=${encodeURIComponent(
+          requestId
+        )}`,
+        {
+          cache: "no-store",
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(
+          result.error ||
+            "Unable to prepare document download."
+        );
+      }
+
+      if (!result.signedUrl) {
+        throw new Error(
+          "Secure document link was not returned."
+        );
+      }
+
+      window.location.href =
+        result.signedUrl;
+    } catch (error: any) {
+      console.error(
+        "DOCUMENT DOWNLOAD ERROR:",
+        error
+      );
+
+      alert(
+        error?.message ||
+          "Unable to retrieve the DNR document."
+      );
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   if (paymentState !== "paid") {
     return (
@@ -250,17 +310,27 @@ export default function DocumentRequestCompletePage() {
         <div className="bg-slate-50 rounded-3xl p-10 mb-10 text-center">
 
           <h2 className="text-2xl font-semibold text-slate-800 mb-6">
-            Document Request Received
+            Your DNR Document Is Ready
           </h2>
 
-          <p className="text-slate-600 leading-relaxed mb-4">
-            Your request for the registered DNR document
-            has been recorded and payment has been confirmed.
+          <p className="text-slate-600 leading-relaxed mb-6">
+            Payment has been confirmed and the registered
+            DNR document is ready for secure retrieval.
           </p>
 
-          <p className="text-slate-600 leading-relaxed">
-            The registered DNR document will be provided
-            through the MyDNR document retrieval process.
+          <button
+            onClick={handleDownload}
+            disabled={downloading}
+            className="w-full bg-slate-900 text-white py-4 rounded-xl font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {downloading
+              ? "Preparing Secure Document..."
+              : "Download Registered DNR Document"}
+          </button>
+
+          <p className="text-sm text-slate-500 mt-4">
+            The secure document link is temporary and expires
+            after a short period.
           </p>
 
         </div>
@@ -287,8 +357,8 @@ export default function DocumentRequestCompletePage() {
             </li>
 
             <li>
-              ✓ The registered DNR document can now be
-              processed for delivery.
+              ✓ Secure access to the registered DNR document
+              is now available.
             </li>
 
           </ul>
@@ -304,8 +374,9 @@ export default function DocumentRequestCompletePage() {
           <p className="text-slate-600 leading-relaxed">
             MyDNR records document retrieval requests for
             audit and security purposes. Only the registered
-            DNR document will be provided through the
-            retrieval process.
+            DNR document is made available through this
+            retrieval process. Identification documents are
+            never provided through this service.
           </p>
 
         </div>
