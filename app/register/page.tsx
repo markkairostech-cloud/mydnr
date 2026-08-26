@@ -16,21 +16,57 @@ export default function RegisterPage() {
   const [nextOfKinPhone, setNextOfKinPhone] = useState("");
 
   const handleContinue = () => {
+    if (!fullName.trim()) {
+      alert("Please enter the participant's Full Name.");
+      return;
+    }
+
+    if (!saIdNumber.trim()) {
+      alert(
+        "Please enter the participant's South African ID Number."
+      );
+      return;
+    }
+
     if (!dateOfBirth) {
       alert(
-        "Please enter the participant's Date of Birth before continuing."
+        "Please enter the participant's Date of Birth."
+      );
+      return;
+    }
+
+    if (!email.trim()) {
+      alert(
+        "Please enter the participant's Email Address."
+      );
+      return;
+    }
+
+    const emailPattern =
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailPattern.test(email.trim())) {
+      alert(
+        "Please enter a valid Email Address."
+      );
+      return;
+    }
+
+    if (!mobileNumber.trim()) {
+      alert(
+        "Please enter the participant's Mobile Number."
       );
       return;
     }
 
     const registrationData = {
-      fullName,
-      saIdNumber,
+      fullName: fullName.trim(),
+      saIdNumber: saIdNumber.trim(),
       dateOfBirth,
-      email,
-      mobileNumber,
-      nextOfKinName,
-      nextOfKinPhone,
+      email: email.trim().toLowerCase(),
+      mobileNumber: mobileNumber.trim(),
+      nextOfKinName: nextOfKinName.trim(),
+      nextOfKinPhone: nextOfKinPhone.trim(),
     };
 
     localStorage.setItem(
@@ -99,6 +135,7 @@ export default function RegisterPage() {
               type="text"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
+              required
               className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-slate-400"
             />
           </div>
@@ -112,6 +149,7 @@ export default function RegisterPage() {
               type="text"
               value={saIdNumber}
               onChange={(e) => setSaIdNumber(e.target.value)}
+              required
               className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-slate-400"
             />
           </div>
@@ -139,6 +177,7 @@ export default function RegisterPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              required
               className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-slate-400"
             />
           </div>
@@ -152,6 +191,7 @@ export default function RegisterPage() {
               type="tel"
               value={mobileNumber}
               onChange={(e) => setMobileNumber(e.target.value)}
+              required
               className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-slate-400"
             />
           </div>
