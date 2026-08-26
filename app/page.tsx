@@ -68,7 +68,7 @@ export default function Home() {
             </p>
 
             <p className="font-semibold text-slate-800 mb-6">
-              Registration Fee: R100
+              Registration Fee: R25
             </p>
 
             <div className="mt-auto">
@@ -101,9 +101,12 @@ export default function Home() {
             </p>
 
             <div className="mt-auto">
-              <button className="w-full bg-slate-900 text-white py-3 rounded-xl">
+              <Link
+                href="/check"
+                className="block w-full bg-slate-900 text-white py-3 rounded-xl text-center"
+              >
                 Check
-              </button>
+              </Link>
             </div>
 
           </div>
@@ -118,17 +121,20 @@ export default function Home() {
             </h3>
 
             <p className="text-slate-600 mb-6">
-              Request and download a registered DNR document.
+              Request access to a registered DNR document.
             </p>
 
             <p className="font-semibold text-slate-800 mb-6">
-              Retrieval Fee: R100
+              Retrieval Fee: R25
             </p>
 
             <div className="mt-auto">
-              <button className="w-full bg-slate-900 text-white py-3 rounded-xl">
+              <Link
+                href="/request-document"
+                className="block w-full bg-slate-900 text-white py-3 rounded-xl text-center"
+              >
                 Request
-              </button>
+              </Link>
             </div>
 
           </div>
