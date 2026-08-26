@@ -113,7 +113,9 @@ export async function POST(req: Request) {
     const m_payment_id = registrationId;
 
     const return_url =
-      `${siteUrl}/register/complete`;
+      `${siteUrl}/register/complete?registrationId=${encodeURIComponent(
+        registrationId
+      )}`;
 
     const cancel_url =
       `${siteUrl}/register/payment`;
@@ -145,6 +147,7 @@ export async function POST(req: Request) {
       custom_str1: saIdNumber,
       custom_str2: email,
       custom_str3: fullName,
+      custom_str4: registrationId,
     };
 
     const signature = buildSignature(
