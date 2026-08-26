@@ -18,7 +18,41 @@ export default function PaymentPage() {
 
   const handleRegistration = async () => {
     if (!registration) {
-      alert("Registration data not found.");
+      alert(
+        "Registration data could not be found. Please restart the registration process."
+      );
+      return;
+    }
+
+    const requiredParticipantDataPresent =
+      registration.fullName &&
+      registration.saIdNumber &&
+      registration.dateOfBirth &&
+      registration.email &&
+      registration.mobileNumber;
+
+    if (!requiredParticipantDataPresent) {
+      alert(
+        "Participant details are incomplete. Please return to Step 1 and complete all required information."
+      );
+      return;
+    }
+
+    const requiredDocumentsPresent =
+      registration.idDocumentPath &&
+      registration.dnrDocumentPath;
+
+    if (!requiredDocumentsPresent) {
+      alert(
+        "Required documents are missing. Please return to Step 2 and upload both documents."
+      );
+      return;
+    }
+
+    if (registration.consentAccepted !== true) {
+      alert(
+        "Consent has not been completed. Please return to Step 3 and accept all required acknowledgements."
+      );
       return;
     }
 

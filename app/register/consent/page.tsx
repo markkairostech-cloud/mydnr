@@ -22,9 +22,43 @@ export default function ConsentPage() {
     consent5;
 
   const handleContinue = () => {
+    if (!allChecked) {
+      alert(
+        "Please review and accept all consent and acknowledgement statements before continuing."
+      );
+      return;
+    }
+
     const existingData = JSON.parse(
       localStorage.getItem("mydnr-registration") || "{}"
     );
+
+    const requiredRegistrationDataPresent =
+      existingData.fullName &&
+      existingData.saIdNumber &&
+      existingData.dateOfBirth &&
+      existingData.email &&
+      existingData.mobileNumber;
+
+    if (!requiredRegistrationDataPresent) {
+      alert(
+        "Participant details are incomplete. Please return to Step 1 and complete the required information."
+      );
+      router.push("/register");
+      return;
+    }
+
+    const requiredDocumentsPresent =
+      existingData.idDocumentPath &&
+      existingData.dnrDocumentPath;
+
+    if (!requiredDocumentsPresent) {
+      alert(
+        "Required documents have not been uploaded. Please return to Step 2 and upload both documents."
+      );
+      router.push("/register/documents");
+      return;
+    }
 
     const updatedData = {
       ...existingData,
@@ -75,7 +109,6 @@ export default function ConsentPage() {
 
         {/* Information Panel */}
         <div className="bg-slate-50 rounded-3xl p-8 mb-10 text-center">
-
           <h2 className="text-2xl font-semibold text-slate-800 mb-4">
             Consent & Acknowledgement
           </h2>
@@ -84,7 +117,6 @@ export default function ConsentPage() {
             Before completing registration, please review and acknowledge
             the statements below.
           </p>
-
         </div>
 
         {/* Consent Statements */}
@@ -161,7 +193,7 @@ export default function ConsentPage() {
 
             <span className="text-slate-700">
               I understand that authorised users may perform a
-              DNR existence check using the participant's South
+              DNR existence check using the participant&apos;s South
               African ID Number and may request access to the
               registered DNR document through the MyDNR service.
             </span>
@@ -179,7 +211,7 @@ export default function ConsentPage() {
           <p className="text-slate-600 leading-relaxed">
             MyDNR acts as a secure document registration and retrieval
             service. Registration of a DNR document does not constitute
-            medical advice, legal advice or validation of the document's
+            medical advice, legal advice or validation of the document&apos;s
             contents. Individuals are encouraged to discuss DNR decisions
             with their healthcare providers and loved ones.
           </p>
