@@ -248,8 +248,11 @@ export default function DocumentRequestCompletePage() {
         );
       }
 
-      window.location.href =
-        result.signedUrl;
+      window.open(
+        result.signedUrl,
+        "_blank",
+        "noopener,noreferrer"
+       );
 
     } catch (error: any) {
       console.error(
