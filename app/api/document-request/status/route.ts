@@ -3,16 +3,20 @@ import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 export async function GET(req: Request) {
   try {
-    const { searchParams } = new URL(req.url);
+    const { searchParams } =
+      new URL(req.url);
 
     const requestId =
-      searchParams.get("requestId");
+      String(
+        searchParams.get("requestId") || ""
+      ).trim();
 
     if (!requestId) {
       return NextResponse.json(
         {
           success: false,
-          error: "Missing document request ID",
+          error:
+            "Missing document request ID",
         },
         {
           status: 400,
@@ -20,24 +24,54 @@ export async function GET(req: Request) {
       );
     }
 
-    const supabase = getSupabaseAdmin();
+    const supabase =
+      getSupabaseAdmin();
 
-    const { data, error } = await supabase
+    const {
+      data: documentRequest,
+      error,
+    } = await supabase
       .from("document_requests")
       .select(
-        "id, payment_status, payment_reference, paid_at"
+        "id, payment_status, paid_at"
       )
-      .eq("id", requestId)
-      .single();
+      .eq(
+        "id",
+        requestId
+      )
+      .maybeSingle();
 
     if (error) {
       throw error;
     }
 
+    if (!documentRequest) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Document request not found.",
+        },
+        {
+          status: 404,
+        }
+      );
+    }
+
     return NextResponse.json({
       success: true,
-      request: data,
+      request: {
+        id:
+          documentRequest.id,
+
+        payment_status:
+          documentRequest.payment_status,
+
+        paid_at:
+          documentRequest.paid_at,
+      },
     });
+
   } catch (error: any) {
     console.error(
       "DOCUMENT REQUEST STATUS ERROR:",
@@ -48,8 +82,7 @@ export async function GET(req: Request) {
       {
         success: false,
         error:
-          error?.message ||
-          "Unable to check document request status",
+          "Unable to check document request status.",
       },
       {
         status: 500,

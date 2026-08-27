@@ -3,6 +3,7 @@ import crypto from "crypto";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 const EXPECTED_RETRIEVAL_AMOUNT = 25.0;
+const ACCESS_WINDOW_HOURS = 24;
 
 /*
  * IMPORTANT:
@@ -311,12 +312,13 @@ export async function POST(req: Request) {
         "id",
         requestId
       )
-      .single();
+      .maybeSingle();
 
-    if (
-      requestError ||
-      !documentRequest
-    ) {
+    if (requestError) {
+      throw requestError;
+    }
+
+    if (!documentRequest) {
       console.error(
         "DOCUMENT REQUEST ITN: rejected - request not found:",
         requestId
@@ -356,7 +358,24 @@ export async function POST(req: Request) {
     }
 
     /*
-     * 8. Mark the document request as paid
+     * 8. Start the secure retrieval window
+     *    from the moment payment is confirmed.
+     */
+    const paidAt =
+      new Date();
+
+    const accessExpiresAt =
+      new Date(
+        paidAt.getTime() +
+          ACCESS_WINDOW_HOURS *
+            60 *
+            60 *
+            1000
+      );
+
+    /*
+     * 9. Mark the document request as paid
+     *    and start the 24-hour access window.
      */
     const {
       error: updateError,
@@ -364,10 +383,15 @@ export async function POST(req: Request) {
       .from("document_requests")
       .update({
         payment_status: "paid",
+
         payment_reference:
           payfastPaymentId,
+
         paid_at:
-          new Date().toISOString(),
+          paidAt.toISOString(),
+
+        access_expires_at:
+          accessExpiresAt.toISOString(),
       })
       .eq(
         "id",
@@ -389,6 +413,11 @@ export async function POST(req: Request) {
 
     console.log(
       "DOCUMENT REQUEST ITN: document request marked paid"
+    );
+
+    console.log(
+      "DOCUMENT REQUEST ITN: secure access expires:",
+      accessExpiresAt.toISOString()
     );
 
     console.log(
