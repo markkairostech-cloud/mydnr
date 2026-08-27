@@ -14,13 +14,6 @@ function buildItnSignature(
 ) {
   const pairs: string[] = [];
 
-  /*
-   * URLSearchParams preserves the order in which PayFast
-   * posted the fields.
-   *
-   * The signature field itself must not be included in
-   * the calculated signature.
-   */
   for (const [key, value] of params.entries()) {
     if (
       key === "signature" ||
@@ -53,6 +46,8 @@ function buildItnSignature(
 }
 
 export async function POST(req: Request) {
+  console.log("PAYFAST ITN: received");
+
   try {
     const body = await req.text();
     const params = new URLSearchParams(body);
@@ -83,14 +78,22 @@ export async function POST(req: Request) {
       process.env.PAYFAST_PASSPHRASE || ""
     ).trim();
 
+    console.log(
+      "PAYFAST ITN: payment status:",
+      paymentStatus
+    );
+
+    console.log(
+      "PAYFAST ITN: registration ID:",
+      registrationId
+    );
+
     /*
-     * 1. Ignore notifications that do not represent
-     *    a completed payment.
+     * 1. Payment must be complete
      */
     if (paymentStatus !== "COMPLETE") {
       console.log(
-        "PayFast ITN ignored - payment not complete:",
-        paymentStatus
+        "PAYFAST ITN: ignored - payment not complete"
       );
 
       return new NextResponse("Ignored", {
@@ -98,12 +101,16 @@ export async function POST(req: Request) {
       });
     }
 
+    console.log(
+      "PAYFAST ITN: payment status valid"
+    );
+
     /*
-     * 2. Required ITN fields.
+     * 2. Required fields
      */
     if (!registrationId) {
       console.error(
-        "PayFast ITN rejected - missing registration ID"
+        "PAYFAST ITN: rejected - missing registration ID"
       );
 
       return new NextResponse(
@@ -116,7 +123,7 @@ export async function POST(req: Request) {
 
     if (!payfastPaymentId) {
       console.error(
-        "PayFast ITN rejected - missing PayFast payment ID"
+        "PAYFAST ITN: rejected - missing PayFast payment ID"
       );
 
       return new NextResponse(
@@ -127,12 +134,19 @@ export async function POST(req: Request) {
       );
     }
 
+    console.log(
+      "PAYFAST ITN: required IDs present"
+    );
+
+    /*
+     * 3. Merchant validation
+     */
     if (
       !configuredMerchantId ||
       !receivedMerchantId
     ) {
       console.error(
-        "PayFast ITN rejected - merchant ID unavailable"
+        "PAYFAST ITN: rejected - merchant ID unavailable"
       );
 
       return new NextResponse(
@@ -143,15 +157,12 @@ export async function POST(req: Request) {
       );
     }
 
-    /*
-     * 3. Verify merchant ID.
-     */
     if (
       receivedMerchantId !==
       configuredMerchantId
     ) {
       console.error(
-        "PayFast ITN rejected - merchant ID mismatch"
+        "PAYFAST ITN: rejected - merchant ID mismatch"
       );
 
       return new NextResponse(
@@ -162,12 +173,16 @@ export async function POST(req: Request) {
       );
     }
 
+    console.log(
+      "PAYFAST ITN: merchant ID valid"
+    );
+
     /*
-     * 4. Verify ITN signature.
+     * 4. Signature validation
      */
     if (!receivedSignature) {
       console.error(
-        "PayFast ITN rejected - missing signature"
+        "PAYFAST ITN: rejected - missing signature"
       );
 
       return new NextResponse(
@@ -189,7 +204,7 @@ export async function POST(req: Request) {
       receivedSignature
     ) {
       console.error(
-        "PayFast ITN rejected - invalid signature"
+        "PAYFAST ITN: rejected - invalid signature"
       );
 
       return new NextResponse(
@@ -200,12 +215,16 @@ export async function POST(req: Request) {
       );
     }
 
+    console.log(
+      "PAYFAST ITN: signature valid"
+    );
+
     /*
-     * 5. Verify payment amount.
+     * 5. Amount validation
      */
     if (!amountGross) {
       console.error(
-        "PayFast ITN rejected - missing payment amount"
+        "PAYFAST ITN: rejected - missing payment amount"
       );
 
       return new NextResponse(
@@ -227,7 +246,7 @@ export async function POST(req: Request) {
       ) > 0.01
     ) {
       console.error(
-        "PayFast ITN rejected - amount mismatch:",
+        "PAYFAST ITN: rejected - amount mismatch:",
         amountGross
       );
 
@@ -239,8 +258,12 @@ export async function POST(req: Request) {
       );
     }
 
+    console.log(
+      "PAYFAST ITN: amount valid"
+    );
+
     /*
-     * 6. Confirm that the registration exists.
+     * 6. Registration lookup
      */
     const supabase = getSupabaseAdmin();
 
@@ -260,7 +283,7 @@ export async function POST(req: Request) {
       !registration
     ) {
       console.error(
-        "PayFast ITN rejected - registration not found:",
+        "PAYFAST ITN: rejected - registration not found:",
         registrationId
       );
 
@@ -272,20 +295,19 @@ export async function POST(req: Request) {
       );
     }
 
+    console.log(
+      "PAYFAST ITN: registration found"
+    );
+
     /*
-     * 7. Idempotency.
-     *
-     * PayFast can retry notifications. If we have
-     * already successfully processed this registration,
-     * simply acknowledge the ITN.
+     * 7. Idempotency
      */
     if (
       registration.payment_status ===
       "paid"
     ) {
       console.log(
-        "PayFast ITN already processed:",
-        registrationId
+        "PAYFAST ITN: already processed"
       );
 
       return new NextResponse(
@@ -297,7 +319,7 @@ export async function POST(req: Request) {
     }
 
     /*
-     * 8. Mark the registration as paid.
+     * 8. Update registration
      */
     const { error: updateError } =
       await supabase
@@ -316,12 +338,20 @@ export async function POST(req: Request) {
         );
 
     if (updateError) {
+      console.error(
+        "PAYFAST ITN: database update failed:",
+        updateError.message
+      );
+
       throw updateError;
     }
 
     console.log(
-      "PayFast registration payment confirmed:",
-      registrationId
+      "PAYFAST ITN: registration marked paid"
+    );
+
+    console.log(
+      "PAYFAST ITN: completed successfully"
     );
 
     return new NextResponse("OK", {
