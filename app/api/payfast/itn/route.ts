@@ -14,19 +14,26 @@ function buildItnSignature(
 ) {
   const pairs: string[] = [];
 
+  /*
+   * PayFast requires the ITN signature string to use
+   * the exact order of the fields received.
+   *
+   * Stop when the signature field itself is reached.
+   */
   for (const [key, value] of params.entries()) {
-    if (
-      key === "signature" ||
-      value === undefined ||
-      value === null ||
-      value.length === 0
-    ) {
-      continue;
+    if (key === "signature") {
+      break;
     }
 
-    pairs.push(
-      `${key}=${encodePayFastValue(value)}`
-    );
+    if (
+      value !== undefined &&
+      value !== null &&
+      value.length > 0
+    ) {
+      pairs.push(
+        `${key}=${encodePayFastValue(value)}`
+      );
+    }
   }
 
   if (passphrase && passphrase.trim()) {
