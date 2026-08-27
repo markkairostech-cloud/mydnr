@@ -4,47 +4,59 @@ import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 const EXPECTED_REGISTRATION_AMOUNT = 25.0;
 
-function encodePayFastValue(value: string) {
-  return encodeURIComponent(value.trim()).replace(/%20/g, "+");
+/*
+ * IMPORTANT:
+ *
+ * This encoder is specifically for the incoming PayFast ITN.
+ *
+ * Do not trim the incoming values here.
+ * The ITN signature must be reconstructed from the values
+ * PayFast actually posted to us.
+ */
+function encodePayFastItnValue(value: string) {
+  return encodeURIComponent(value).replace(/%20/g, "+");
 }
 
-function buildItnSignature(
-  params: URLSearchParams,
-  passphrase?: string
+/*
+ * Reconstruct the PayFast ITN parameter string.
+ *
+ * PayFast posts the fields in a specific order.
+ * We preserve that order and stop when we reach "signature".
+ */
+function buildItnParameterString(
+  params: URLSearchParams
 ) {
   const pairs: string[] = [];
 
-  /*
-   * PayFast requires the ITN signature string to use
-   * the exact order of the fields received.
-   *
-   * Stop when the signature field itself is reached.
-   */
   for (const [key, value] of params.entries()) {
     if (key === "signature") {
       break;
     }
 
-    if (
-      value !== undefined &&
-      value !== null &&
-      value.length > 0
-    ) {
-      pairs.push(
-        `${key}=${encodePayFastValue(value)}`
-      );
-    }
-  }
-
-  if (passphrase && passphrase.trim()) {
     pairs.push(
-      `passphrase=${encodePayFastValue(
-        passphrase
-      )}`
+      `${key}=${encodePayFastItnValue(value)}`
     );
   }
 
-  const paramString = pairs.join("&");
+  return pairs.join("&");
+}
+
+/*
+ * Calculate the expected PayFast ITN signature.
+ */
+function buildItnSignature(
+  params: URLSearchParams,
+  passphrase?: string
+) {
+  let paramString =
+    buildItnParameterString(params);
+
+  if (passphrase) {
+    paramString +=
+      `&passphrase=${encodePayFastItnValue(
+        passphrase
+      )}`;
+  }
 
   return crypto
     .createHash("md5")
@@ -56,8 +68,14 @@ export async function POST(req: Request) {
   console.log("PAYFAST ITN: received");
 
   try {
+    /*
+     * Read the raw application/x-www-form-urlencoded
+     * body sent by PayFast.
+     */
     const body = await req.text();
-    const params = new URLSearchParams(body);
+
+    const params =
+      new URLSearchParams(body);
 
     const paymentStatus =
       params.get("payment_status");
@@ -77,13 +95,15 @@ export async function POST(req: Request) {
     const receivedSignature =
       params.get("signature");
 
-    const configuredMerchantId = String(
-      process.env.PAYFAST_MERCHANT_ID || ""
-    ).trim();
+    const configuredMerchantId =
+      String(
+        process.env.PAYFAST_MERCHANT_ID || ""
+      ).trim();
 
-    const passphrase = String(
-      process.env.PAYFAST_PASSPHRASE || ""
-    ).trim();
+    const passphrase =
+      String(
+        process.env.PAYFAST_PASSPHRASE || ""
+      ).trim();
 
     console.log(
       "PAYFAST ITN: payment status:",
@@ -96,16 +116,19 @@ export async function POST(req: Request) {
     );
 
     /*
-     * 1. Payment must be complete
+     * 1. Payment status
      */
     if (paymentStatus !== "COMPLETE") {
       console.log(
         "PAYFAST ITN: ignored - payment not complete"
       );
 
-      return new NextResponse("Ignored", {
-        status: 200,
-      });
+      return new NextResponse(
+        "Ignored",
+        {
+          status: 200,
+        }
+      );
     }
 
     console.log(
@@ -113,7 +136,7 @@ export async function POST(req: Request) {
     );
 
     /*
-     * 2. Required fields
+     * 2. Required identifiers
      */
     if (!registrationId) {
       console.error(
@@ -146,7 +169,7 @@ export async function POST(req: Request) {
     );
 
     /*
-     * 3. Merchant validation
+     * 3. Merchant ID validation
      */
     if (
       !configuredMerchantId ||
@@ -203,12 +226,12 @@ export async function POST(req: Request) {
     const calculatedSignature =
       buildItnSignature(
         params,
-        passphrase
+        passphrase || undefined
       );
 
     if (
-      calculatedSignature !==
-      receivedSignature
+      calculatedSignature.toLowerCase() !==
+      receivedSignature.toLowerCase()
     ) {
       console.error(
         "PAYFAST ITN: rejected - invalid signature"
@@ -270,9 +293,10 @@ export async function POST(req: Request) {
     );
 
     /*
-     * 6. Registration lookup
+     * 6. Find the registration
      */
-    const supabase = getSupabaseAdmin();
+    const supabase =
+      getSupabaseAdmin();
 
     const {
       data: registration,
@@ -282,7 +306,10 @@ export async function POST(req: Request) {
       .select(
         "id, payment_status, payment_reference, paid_at"
       )
-      .eq("id", registrationId)
+      .eq(
+        "id",
+        registrationId
+      )
       .single();
 
     if (
@@ -308,6 +335,9 @@ export async function POST(req: Request) {
 
     /*
      * 7. Idempotency
+     *
+     * If PayFast somehow sends the same notification
+     * again, do not process the payment twice.
      */
     if (
       registration.payment_status ===
@@ -326,23 +356,27 @@ export async function POST(req: Request) {
     }
 
     /*
-     * 8. Update registration
+     * 8. Mark registration as paid
      */
-    const { error: updateError } =
-      await supabase
-        .from("dnr_registrations")
-        .update({
-          payment_status: "paid",
-          payment_reference:
-            payfastPaymentId,
-          paid_at:
-            new Date().toISOString(),
-        })
-        .eq("id", registrationId)
-        .neq(
-          "payment_status",
-          "paid"
-        );
+    const {
+      error: updateError,
+    } = await supabase
+      .from("dnr_registrations")
+      .update({
+        payment_status: "paid",
+        payment_reference:
+          payfastPaymentId,
+        paid_at:
+          new Date().toISOString(),
+      })
+      .eq(
+        "id",
+        registrationId
+      )
+      .neq(
+        "payment_status",
+        "paid"
+      );
 
     if (updateError) {
       console.error(
@@ -361,9 +395,12 @@ export async function POST(req: Request) {
       "PAYFAST ITN: completed successfully"
     );
 
-    return new NextResponse("OK", {
-      status: 200,
-    });
+    return new NextResponse(
+      "OK",
+      {
+        status: 200,
+      }
+    );
 
   } catch (error: any) {
     console.error(
