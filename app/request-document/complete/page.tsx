@@ -221,8 +221,46 @@ export default function DocumentRequestCompletePage() {
       return;
     }
 
+    // Open the tab immediately while the browser still
+    // considers this a direct user action.
+    const documentWindow = window.open(
+      "",
+      "_blank"
+    );
+
+    if (!documentWindow) {
+      alert(
+        "Your browser blocked the document window. Please allow pop-ups for MyDNR and try again."
+      );
+      return;
+    }
+
     try {
       setDownloading(true);
+
+      documentWindow.document.write(`
+        <html>
+          <head>
+            <title>MyDNR - Preparing Document</title>
+          </head>
+          <body style="
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #ffffff;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+          ">
+            <div>
+              <h2>Preparing your secure DNR document...</h2>
+              <p>Please wait a moment.</p>
+            </div>
+          </body>
+        </html>
+      `);
 
       const response = await fetch(
         `/api/document-request/download?requestId=${encodeURIComponent(
@@ -248,17 +286,16 @@ export default function DocumentRequestCompletePage() {
         );
       }
 
-      window.open(
-        result.signedUrl,
-        "_blank",
-        "noopener,noreferrer"
-       );
+      documentWindow.location.href =
+        result.signedUrl;
 
     } catch (error: any) {
       console.error(
         "DOCUMENT DOWNLOAD ERROR:",
         error
       );
+
+      documentWindow.close();
 
       alert(
         error?.message ||
@@ -455,7 +492,8 @@ export default function DocumentRequestCompletePage() {
           </button>
 
           <p className="text-sm text-slate-500 mt-4">
-            For your security, access to this document is temporary. You may view or download a copy while the secure link is active.
+            For your security, access to this document is temporary.
+            You may view or download a copy while the secure link is active.
           </p>
 
         </div>
