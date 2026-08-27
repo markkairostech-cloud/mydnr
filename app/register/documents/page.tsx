@@ -1,6 +1,5 @@
 "use client";
 
-import { supabase } from "@/lib/supabase";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
@@ -17,15 +16,29 @@ const ALLOWED_FILE_TYPES = [
 export default function RegisterPage() {
   const router = useRouter();
 
-  const [idDocument, setIdDocument] = useState<File | null>(null);
-  const [dnrDocument, setDnrDocument] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false);
+  const [idDocument, setIdDocument] =
+    useState<File | null>(null);
+
+  const [dnrDocument, setDnrDocument] =
+    useState<File | null>(null);
+
+  const [uploading, setUploading] =
+    useState(false);
 
   const validateFile = (file: File) => {
     if (!ALLOWED_FILE_TYPES.includes(file.type)) {
       alert(
         "Please select a PDF, JPG, JPEG or PNG file."
       );
+
+      return false;
+    }
+
+    if (file.size <= 0) {
+      alert(
+        "Please select a valid file."
+      );
+
       return false;
     }
 
@@ -33,6 +46,7 @@ export default function RegisterPage() {
       alert(
         "Please select a file smaller than 10 MB."
       );
+
       return false;
     }
 
@@ -71,52 +85,97 @@ export default function RegisterPage() {
     setDnrDocument(file);
   };
 
-  const uploadFile = async (
-    file: File,
-    bucket: string
-  ) => {
-    const fileName = `${Date.now()}-${file.name}`;
-
-    const { data, error } = await supabase.storage
-      .from(bucket)
-      .upload(fileName, file);
-
-    if (error) {
-      throw error;
-    }
-
-    return data.path;
-  };
-
   const handleContinue = async () => {
     if (!idDocument || !dnrDocument) {
-      alert("Please upload both documents.");
+      alert(
+        "Please upload both documents."
+      );
+
       return;
     }
 
     setUploading(true);
 
     try {
-      const idDocumentPath = await uploadFile(
-        idDocument,
-        "id-documents"
+      /*
+       * Both documents are now sent to the
+       * MyDNR server.
+       *
+       * The browser no longer uploads
+       * directly to Supabase Storage.
+       */
+      const formData =
+        new FormData();
+
+      formData.append(
+        "idDocument",
+        idDocument
       );
 
-      const dnrDocumentPath = await uploadFile(
-        dnrDocument,
-        "dnr-documents"
+      formData.append(
+        "dnrDocument",
+        dnrDocument
       );
 
-      const existingData = JSON.parse(
-        localStorage.getItem("mydnr-registration") || "{}"
-      );
+      const response =
+        await fetch(
+          "/api/register/documents",
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
+
+      const result =
+        await response.json();
+
+      if (
+        !response.ok ||
+        !result.success
+      ) {
+        throw new Error(
+          result.error ||
+            "Document upload failed."
+        );
+      }
+
+      if (
+        !result.idDocumentPath ||
+        !result.dnrDocumentPath
+      ) {
+        throw new Error(
+          "Secure document paths were not returned."
+        );
+      }
+
+      const existingData =
+        JSON.parse(
+          localStorage.getItem(
+            "mydnr-registration"
+          ) || "{}"
+        );
 
       const updatedData = {
         ...existingData,
-        idDocumentName: idDocument.name,
-        dnrDocumentName: dnrDocument.name,
-        idDocumentPath,
-        dnrDocumentPath,
+
+        /*
+         * Original filenames are kept only
+         * for the local registration flow/UI.
+         *
+         * Supabase Storage uses opaque random
+         * filenames generated server-side.
+         */
+        idDocumentName:
+          idDocument.name,
+
+        dnrDocumentName:
+          dnrDocument.name,
+
+        idDocumentPath:
+          result.idDocumentPath,
+
+        dnrDocumentPath:
+          result.dnrDocumentPath,
       };
 
       localStorage.setItem(
@@ -124,16 +183,21 @@ export default function RegisterPage() {
         JSON.stringify(updatedData)
       );
 
-      router.push("/register/consent");
+      router.push(
+        "/register/consent"
+      );
 
     } catch (error: any) {
-      console.error("UPLOAD ERROR:", error);
+      console.error(
+        "UPLOAD ERROR:",
+        error
+      );
 
       alert(
         error?.message ||
-        JSON.stringify(error) ||
-        "Document upload failed."
+          "Document upload failed."
       );
+
     } finally {
       setUploading(false);
     }
@@ -178,6 +242,7 @@ export default function RegisterPage() {
 
         {/* Information Panel */}
         <div className="bg-slate-50 rounded-3xl p-8 mb-10 text-center">
+
           <h2 className="text-2xl font-semibold text-slate-800 mb-4">
             Document Uploads
           </h2>
@@ -187,6 +252,7 @@ export default function RegisterPage() {
             your registration: your identification document and
             your completed, signed DNR request.
           </p>
+
         </div>
 
         {/* ID Document Upload */}
@@ -223,7 +289,8 @@ export default function RegisterPage() {
                   e.target.files?.[0] || null
                 )
               }
-              className="mt-2 block w-full text-sm text-slate-500"
+              disabled={uploading}
+              className="mt-2 block w-full text-sm text-slate-500 disabled:opacity-60"
             />
 
             {idDocument && (
@@ -270,7 +337,8 @@ export default function RegisterPage() {
                   e.target.files?.[0] || null
                 )
               }
-              className="mt-2 block w-full text-sm text-slate-500"
+              disabled={uploading}
+              className="mt-2 block w-full text-sm text-slate-500 disabled:opacity-60"
             />
 
             {dnrDocument && (
@@ -322,7 +390,7 @@ export default function RegisterPage() {
             className="w-2/3 bg-slate-900 text-white py-4 rounded-xl text-center disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {uploading
-              ? "Uploading Documents..."
+              ? "Uploading Documents Securely..."
               : "Continue to Consent & Acknowledgement"}
           </button>
 
