@@ -123,7 +123,7 @@ export default function Home() {
             </h3>
 
             <p className="text-slate-600 mb-6">
-              Request access to a registered DNR document.
+              Request secure access to a registered DNR document when it is needed for someone you care about.
             </p>
 
             <p className="font-semibold text-slate-800 mb-6">

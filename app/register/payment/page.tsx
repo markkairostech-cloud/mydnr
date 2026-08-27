@@ -33,7 +33,7 @@ export default function PaymentPage() {
 
     if (!requiredParticipantDataPresent) {
       alert(
-        "Participant details are incomplete. Please return to Step 1 and complete all required information."
+        "Your details are incomplete. Please return to Step 1 and complete all required information."
       );
       return;
     }
@@ -165,21 +165,27 @@ export default function PaymentPage() {
 
   return (
     <main className="min-h-screen bg-white">
-      <div className="max-w-3xl mx-auto px-6 py-16">
+      <div className="max-w-3xl mx-auto px-6 py-12">
 
-        <div className="flex justify-center mb-6">
+        {/* Logo */}
+        <div className="flex justify-center mb-5">
           <Image
             src="/images/mydnr-logo.png"
             alt="MyDNR South Africa"
-            width={300}
-            height={300}
+            width={330}
+            height={330}
+            style={{
+              width: "auto",
+              height: "auto",
+            }}
             priority
           />
         </div>
 
-        <div className="text-center mb-10">
-          <h1 className="text-4xl font-bold text-slate-900 mb-4">
-            Register a DNR Request
+        {/* Page Heading */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-slate-900 mb-3">
+            Register Your DNR Request
           </h1>
 
           <p className="text-slate-600">
@@ -187,30 +193,33 @@ export default function PaymentPage() {
           </p>
         </div>
 
-        <div className="mb-12">
+        {/* Progress Bar */}
+        <div className="mb-8">
           <div className="w-full bg-slate-200 rounded-full h-3">
             <div className="bg-slate-900 h-3 rounded-full w-full"></div>
           </div>
         </div>
 
-        <div className="bg-slate-50 rounded-3xl p-8 mb-10 text-center">
-          <h2 className="text-2xl font-semibold text-slate-800 mb-4">
+        {/* Payment Information */}
+        <div className="bg-slate-50 rounded-3xl p-6 mb-7 text-center">
+          <h2 className="text-2xl font-semibold text-slate-800 mb-3">
             Payment
           </h2>
 
           <p className="text-slate-600 leading-relaxed">
-            A registration fee is required to complete registration
-            and securely store the participant&apos;s DNR record.
+            A registration fee is required to securely complete
+            and store your DNR registration.
           </p>
         </div>
 
-        <div className="bg-slate-50 rounded-3xl p-8 mb-10">
-          <h3 className="text-xl font-semibold text-slate-800 mb-6">
+        {/* Registration Summary */}
+        <div className="bg-slate-50 rounded-3xl p-6 mb-7">
+          <h3 className="text-xl font-semibold text-slate-800 mb-5">
             Registration Summary
           </h3>
 
           {registration && (
-            <div className="space-y-5">
+            <div className="space-y-4">
 
               <div>
                 <p className="font-semibold text-slate-800">
@@ -262,16 +271,17 @@ export default function PaymentPage() {
           )}
         </div>
 
-        <div className="border border-slate-200 rounded-3xl p-10 mb-10 text-center">
-          <p className="text-slate-600 mb-3">
+        {/* Fee Panel */}
+        <div className="border border-slate-200 rounded-3xl p-7 mb-7 text-center">
+          <p className="text-slate-600 mb-2">
             Registration Fee
           </p>
 
-          <p className="text-5xl font-bold text-slate-900 mb-3">
+          <p className="text-5xl font-bold text-slate-900 mb-2">
             R25
           </p>
 
-          <p className="text-slate-500 mb-4">
+          <p className="text-slate-500 mb-3">
             One-time registration fee
           </p>
 
@@ -281,19 +291,20 @@ export default function PaymentPage() {
           </p>
         </div>
 
-        <div className="bg-slate-50 rounded-3xl p-8 mb-10">
-          <h3 className="text-xl font-semibold text-slate-800 mb-4">
+        {/* Before You Continue */}
+        <div className="bg-slate-50 rounded-3xl p-6 mb-7">
+          <h3 className="text-xl font-semibold text-slate-800 mb-3">
             Before You Continue
           </h3>
 
           <p className="text-slate-600 leading-relaxed">
-            Once payment has been completed, the participant&apos;s
-            DNR documentation will be securely stored and made
-            available through the MyDNR registration, verification
-            and retrieval service.
+            Once payment is confirmed, your DNR registration will
+            be securely stored and available through the MyDNR
+            verification and retrieval service when it may be needed.
           </p>
         </div>
 
+        {/* Navigation */}
         <div className="flex gap-4">
 
           <Link

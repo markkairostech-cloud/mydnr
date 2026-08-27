@@ -31,7 +31,7 @@ export default function RequestDocumentPage() {
 
     if (!cleanedId) {
       alert(
-        "Please enter the participant's South African ID Number."
+        "Please enter the South African ID Number of the person whose DNR document you are requesting."
       );
       return;
     }
@@ -69,7 +69,7 @@ export default function RequestDocumentPage() {
 
     if (!confirmed) {
       alert(
-        "Please confirm that you have a legitimate reason for requesting access to this document."
+        "Please confirm that you have a legitimate need to access this DNR document and understand that your request will be recorded."
       );
       return;
     }
@@ -207,49 +207,59 @@ export default function RequestDocumentPage() {
 
   return (
     <main className="min-h-screen bg-white">
-      <div className="max-w-3xl mx-auto px-6 py-16">
+      <div className="max-w-3xl mx-auto px-6 py-12">
 
         {/* Logo */}
-        <div className="flex justify-center mb-6">
+        <div className="flex justify-center mb-5">
           <Image
             src="/images/mydnr-logo.png"
             alt="MyDNR South Africa"
-            width={300}
-            height={300}
+            width={330}
+            height={330}
+            style={{
+              width: "auto",
+              height: "auto",
+            }}
             priority
           />
         </div>
 
         {/* Page Heading */}
-        <div className="text-center mb-10">
+        <div className="text-center mb-8">
 
-          <h1 className="text-4xl font-bold text-slate-900 mb-4">
+          <h1 className="text-4xl font-bold text-slate-900 mb-3">
             Request a DNR Document
           </h1>
 
           <p className="text-slate-600">
-            Request access to a registered DNR document.
+            Securely request access to a DNR document registered with MyDNR.
           </p>
 
         </div>
 
         {/* Information Panel */}
-        <div className="bg-slate-50 rounded-3xl p-8 mb-10 text-center">
+        <div className="bg-slate-50 rounded-3xl p-7 mb-8 text-center">
 
-          <h2 className="text-2xl font-semibold text-slate-800 mb-4">
+          <h2 className="text-2xl font-semibold text-slate-800 mb-3">
             Document Retrieval Request
           </h2>
 
+          <p className="text-slate-600 leading-relaxed mb-3">
+            Request a registered DNR document when it is needed.
+          </p>
+
           <p className="text-slate-600 leading-relaxed">
-            Complete the information below to request access to a
-            registered DNR document. A retrieval fee of R25 applies
-            during testing.
+            Enter the details below to securely request a DNR document
+            registered with MyDNR. This service helps loved ones,
+            caregivers and healthcare practitioners access a person&apos;s
+            registered wishes when they may be unable to communicate
+            them themselves.
           </p>
 
         </div>
 
         {/* SA ID Number */}
-        <div className="mb-8">
+        <div className="mb-6">
 
           <label className="block text-xl font-semibold text-slate-800 mb-3">
             South African ID Number
@@ -273,13 +283,14 @@ export default function RequestDocumentPage() {
           />
 
           <p className="mt-3 text-base font-medium text-slate-700">
-            Enter the participant&apos;s 13-digit South African ID Number
+            Enter the 13-digit South African ID Number of the person
+            whose DNR document you are requesting.
           </p>
 
         </div>
 
         {/* Your Full Name */}
-        <div className="mb-8">
+        <div className="mb-6">
 
           <label className="block text-xl font-semibold text-slate-800 mb-3">
             Your Full Name
@@ -297,7 +308,7 @@ export default function RequestDocumentPage() {
         </div>
 
         {/* Email Address */}
-        <div className="mb-8">
+        <div className="mb-6">
 
           <label className="block text-xl font-semibold text-slate-800 mb-3">
             Email Address
@@ -315,7 +326,7 @@ export default function RequestDocumentPage() {
         </div>
 
         {/* Confirmation Checkbox */}
-        <div className="bg-slate-50 rounded-3xl p-8 mb-10">
+        <div className="bg-slate-50 rounded-3xl p-6 mb-8">
 
           <label className="flex items-start gap-4">
 
@@ -325,12 +336,14 @@ export default function RequestDocumentPage() {
               onChange={(e) =>
                 setConfirmed(e.target.checked)
               }
-              className="mt-1 h-5 w-5"
+              className="mt-1 h-5 w-5 shrink-0"
             />
 
             <span className="text-slate-700 leading-relaxed">
-              I confirm that I have a legitimate reason for
-              requesting access to this document.
+              I confirm that I am requesting this DNR document
+              because I have a legitimate need to access it and
+              understand that this request will be recorded for
+              security and audit purposes.
             </span>
 
           </label>
@@ -338,34 +351,34 @@ export default function RequestDocumentPage() {
         </div>
 
         {/* Fee Panel */}
-        <div className="border border-slate-200 rounded-3xl p-10 mb-10 text-center">
+        <div className="border border-slate-200 rounded-3xl p-7 mb-8 text-center">
 
-          <p className="text-slate-600 mb-3">
+          <p className="text-slate-600 mb-2">
             Document Retrieval Fee
           </p>
 
-          <p className="text-5xl font-bold text-slate-900 mb-3">
+          <p className="text-5xl font-bold text-slate-900 mb-2">
             R25
           </p>
 
           <p className="text-slate-500">
-            Test document retrieval fee
+            One-time document retrieval fee
           </p>
 
         </div>
 
         {/* Important Notice */}
-        <div className="bg-slate-50 rounded-3xl p-8 mb-10">
+        <div className="bg-slate-50 rounded-3xl p-6 mb-8">
 
-          <h3 className="text-xl font-semibold text-slate-800 mb-4">
+          <h3 className="text-xl font-semibold text-slate-800 mb-3">
             Important Notice
           </h3>
 
           <p className="text-slate-600 leading-relaxed">
             All document retrieval requests are recorded for audit
             and security purposes. MyDNR may retain a record of
-            the request, including the requestor&apos;s details, date
-            and time of access.
+            the request, including the requestor&apos;s details,
+            date and time of access.
           </p>
 
         </div>

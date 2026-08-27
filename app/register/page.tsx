@@ -9,35 +9,106 @@ export default function RegisterPage() {
 
   const [fullName, setFullName] = useState("");
   const [saIdNumber, setSaIdNumber] = useState("");
-  const [dateOfBirth, setDateOfBirth] = useState("");
   const [email, setEmail] = useState("");
   const [mobileNumber, setMobileNumber] = useState("");
   const [nextOfKinName, setNextOfKinName] = useState("");
   const [nextOfKinPhone, setNextOfKinPhone] = useState("");
 
-  const handleContinue = () => {
-    if (!fullName.trim()) {
-      alert("Please enter the participant's Full Name.");
-      return;
+  const deriveDateOfBirth = (idNumber: string) => {
+    const yy = Number(idNumber.slice(0, 2));
+    const mm = Number(idNumber.slice(2, 4));
+    const dd = Number(idNumber.slice(4, 6));
+
+    if (
+      Number.isNaN(yy) ||
+      Number.isNaN(mm) ||
+      Number.isNaN(dd) ||
+      mm < 1 ||
+      mm > 12 ||
+      dd < 1 ||
+      dd > 31
+    ) {
+      return null;
     }
 
-    if (!saIdNumber.trim()) {
+    const currentYear =
+      new Date().getFullYear();
+
+    const currentTwoDigitYear =
+      currentYear % 100;
+
+    const century =
+      yy <= currentTwoDigitYear
+        ? Math.floor(currentYear / 100) * 100
+        : (Math.floor(currentYear / 100) - 1) * 100;
+
+    const fullYear = century + yy;
+
+    const date = new Date(
+      fullYear,
+      mm - 1,
+      dd
+    );
+
+    if (
+      date.getFullYear() !== fullYear ||
+      date.getMonth() !== mm - 1 ||
+      date.getDate() !== dd
+    ) {
+      return null;
+    }
+
+    const month =
+      String(mm).padStart(2, "0");
+
+    const day =
+      String(dd).padStart(2, "0");
+
+    return `${fullYear}-${month}-${day}`;
+  };
+
+  const handleContinue = () => {
+    const cleanedName = fullName.trim();
+    const cleanedId = saIdNumber.trim();
+    const cleanedEmail =
+      email.trim().toLowerCase();
+    const cleanedMobile =
+      mobileNumber.trim();
+
+    if (!cleanedName) {
       alert(
-        "Please enter the participant's South African ID Number."
+        "Please enter your Full Name."
       );
       return;
     }
+
+    if (!cleanedId) {
+      alert(
+        "Please enter your South African ID Number."
+      );
+      return;
+    }
+
+    if (!/^\d{13}$/.test(cleanedId)) {
+      alert(
+        "Please enter a valid 13-digit South African ID Number."
+      );
+      return;
+    }
+
+    const dateOfBirth =
+      deriveDateOfBirth(cleanedId);
 
     if (!dateOfBirth) {
       alert(
-        "Please enter the participant's Date of Birth."
+        "The date contained in this South African ID Number does not appear to be valid."
       );
       return;
     }
 
-    if (!email.trim()) {
+    if (!cleanedEmail) {
       alert(
-        "Please enter the participant's Email Address."
+        "Please enter your Email Address."
       );
       return;
     }
@@ -45,28 +116,30 @@ export default function RegisterPage() {
     const emailPattern =
       /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    if (!emailPattern.test(email.trim())) {
+    if (!emailPattern.test(cleanedEmail)) {
       alert(
         "Please enter a valid Email Address."
       );
       return;
     }
 
-    if (!mobileNumber.trim()) {
+    if (!cleanedMobile) {
       alert(
-        "Please enter the participant's Mobile Number."
+        "Please enter your Mobile Number."
       );
       return;
     }
 
     const registrationData = {
-      fullName: fullName.trim(),
-      saIdNumber: saIdNumber.trim(),
+      fullName: cleanedName,
+      saIdNumber: cleanedId,
       dateOfBirth,
-      email: email.trim().toLowerCase(),
-      mobileNumber: mobileNumber.trim(),
-      nextOfKinName: nextOfKinName.trim(),
-      nextOfKinPhone: nextOfKinPhone.trim(),
+      email: cleanedEmail,
+      mobileNumber: cleanedMobile,
+      nextOfKinName:
+        nextOfKinName.trim(),
+      nextOfKinPhone:
+        nextOfKinPhone.trim(),
     };
 
     localStorage.setItem(
@@ -74,7 +147,9 @@ export default function RegisterPage() {
       JSON.stringify(registrationData)
     );
 
-    router.push("/register/documents");
+    router.push(
+      "/register/documents"
+    );
   };
 
   return (
@@ -82,12 +157,16 @@ export default function RegisterPage() {
       <div className="max-w-3xl mx-auto px-6 py-16">
 
         {/* Logo */}
-        <div className="flex justify-center mb-6">
+        <div className="flex justify-center mb-8">
           <Image
             src="/images/mydnr-logo.png"
             alt="MyDNR South Africa"
-            width={220}
-            height={220}
+            width={330}
+            height={330}
+            style={{
+              width: "auto",
+              height: "auto",
+            }}
             priority
           />
         </div>
@@ -95,7 +174,7 @@ export default function RegisterPage() {
         {/* Page Heading */}
         <div className="text-center mb-10">
           <h1 className="text-4xl font-bold text-slate-900 mb-4">
-            Register a DNR Request
+            Register Your DNR Request
           </h1>
 
           <p className="text-slate-600">
@@ -113,13 +192,14 @@ export default function RegisterPage() {
         {/* Information Panel */}
         <div className="bg-slate-50 rounded-3xl p-8 mb-10 text-center">
           <h2 className="text-2xl font-semibold text-slate-800 mb-4">
-            Participant Details
+            Your Details
           </h2>
 
           <p className="text-slate-600 leading-relaxed">
-            Please provide the participant&apos;s details below.
-            These details will be used to create and identify
-            the DNR record.
+            Please provide your details below.
+            These will be used to securely identify
+            and retrieve your DNR record when it may
+            be needed.
           </p>
         </div>
 
@@ -134,7 +214,9 @@ export default function RegisterPage() {
             <input
               type="text"
               value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
+              onChange={(e) =>
+                setFullName(e.target.value)
+              }
               required
               className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-slate-400"
             />
@@ -148,24 +230,23 @@ export default function RegisterPage() {
             <input
               type="text"
               value={saIdNumber}
-              onChange={(e) => setSaIdNumber(e.target.value)}
+              onChange={(e) => {
+                const value =
+                  e.target.value.replace(/\D/g, "");
+
+                setSaIdNumber(
+                  value.slice(0, 13)
+                );
+              }}
+              maxLength={13}
+              inputMode="numeric"
               required
               className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-slate-400"
             />
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Date of Birth
-            </label>
-
-            <input
-              type="date"
-              value={dateOfBirth}
-              onChange={(e) => setDateOfBirth(e.target.value)}
-              required
-              className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-slate-400"
-            />
+            <p className="mt-2 text-sm text-slate-500">
+              Enter your 13-digit South African ID Number
+            </p>
           </div>
 
           <div>
@@ -176,7 +257,9 @@ export default function RegisterPage() {
             <input
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) =>
+                setEmail(e.target.value)
+              }
               required
               className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-slate-400"
             />
@@ -190,7 +273,9 @@ export default function RegisterPage() {
             <input
               type="tel"
               value={mobileNumber}
-              onChange={(e) => setMobileNumber(e.target.value)}
+              onChange={(e) =>
+                setMobileNumber(e.target.value)
+              }
               required
               className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-slate-400"
             />
@@ -204,7 +289,11 @@ export default function RegisterPage() {
             <input
               type="text"
               value={nextOfKinName}
-              onChange={(e) => setNextOfKinName(e.target.value)}
+              onChange={(e) =>
+                setNextOfKinName(
+                  e.target.value
+                )
+              }
               className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-slate-400"
             />
           </div>
@@ -217,9 +306,19 @@ export default function RegisterPage() {
             <input
               type="tel"
               value={nextOfKinPhone}
-              onChange={(e) => setNextOfKinPhone(e.target.value)}
+              onChange={(e) =>
+                setNextOfKinPhone(
+                  e.target.value
+                )
+              }
               className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-slate-400"
             />
+
+            <p className="mt-3 text-sm text-slate-500 leading-relaxed">
+              Optional — you may add the details of someone close to you
+              who you would like associated with your DNR registration.
+              This does not automatically give them access to your record.
+            </p>
           </div>
 
         </div>

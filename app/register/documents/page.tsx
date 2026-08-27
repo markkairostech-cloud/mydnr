@@ -148,8 +148,12 @@ export default function RegisterPage() {
           <Image
             src="/images/mydnr-logo.png"
             alt="MyDNR South Africa"
-            width={300}
-            height={300}
+            width={330}
+            height={330}
+            style={{
+              width: "auto",
+              height: "auto",
+            }}
             priority
           />
         </div>
@@ -157,7 +161,7 @@ export default function RegisterPage() {
         {/* Page Heading */}
         <div className="text-center mb-10">
           <h1 className="text-4xl font-bold text-slate-900 mb-4">
-            Register a DNR Request
+            Register Your DNR Request
           </h1>
 
           <p className="text-slate-600">
@@ -179,16 +183,17 @@ export default function RegisterPage() {
           </h2>
 
           <p className="text-slate-600 leading-relaxed">
-            Please upload a copy of the participant&apos;s identification
-            document and a signed DNR request document.
+            Please upload the two documents needed to complete
+            your registration: your identification document and
+            your completed, signed DNR request.
           </p>
         </div>
 
         {/* ID Document Upload */}
         <div className="mb-8">
 
-          <label className="block text-sm font-medium text-slate-700 mb-3">
-            South African Identification Document
+          <label className="block text-base font-semibold text-slate-800 mb-3">
+            1. Upload Your Identification Document
           </label>
 
           <div className="border-2 border-dashed border-slate-300 rounded-2xl p-8 text-center">
@@ -197,8 +202,13 @@ export default function RegisterPage() {
               🪪
             </div>
 
-            <p className="font-medium text-slate-800 mb-2">
-              Upload Identification Document
+            <p className="font-semibold text-slate-800 mb-2">
+              Your Identification Document
+            </p>
+
+            <p className="text-slate-600 text-sm mb-2">
+              Upload a copy of your South African ID Card,
+              ID Book or Passport.
             </p>
 
             <p className="text-slate-500 text-sm mb-4">
@@ -218,7 +228,8 @@ export default function RegisterPage() {
 
             {idDocument && (
               <div className="mt-4 text-green-700 font-medium">
-                ✓ {idDocument.name} selected
+                ✓ Identification document selected:{" "}
+                {idDocument.name}
               </div>
             )}
 
@@ -229,8 +240,8 @@ export default function RegisterPage() {
         {/* DNR Upload */}
         <div className="mb-10">
 
-          <label className="block text-sm font-medium text-slate-700 mb-3">
-            Signed DNR Request
+          <label className="block text-base font-semibold text-slate-800 mb-3">
+            2. Upload Your Signed DNR Request
           </label>
 
           <div className="border-2 border-dashed border-slate-300 rounded-2xl p-8 text-center">
@@ -239,8 +250,12 @@ export default function RegisterPage() {
               📄
             </div>
 
-            <p className="font-medium text-slate-800 mb-2">
-              Upload Signed DNR Request
+            <p className="font-semibold text-slate-800 mb-2">
+              Your Signed DNR Request
+            </p>
+
+            <p className="text-slate-600 text-sm mb-2">
+              Upload your completed and signed DNR request.
             </p>
 
             <p className="text-slate-500 text-sm mb-4">
@@ -260,7 +275,8 @@ export default function RegisterPage() {
 
             {dnrDocument && (
               <div className="mt-4 text-green-700 font-medium">
-                ✓ {dnrDocument.name} selected
+                ✓ Signed DNR request selected:{" "}
+                {dnrDocument.name}
               </div>
             )}
 
@@ -276,8 +292,8 @@ export default function RegisterPage() {
           </h3>
 
           <p className="text-slate-600 mb-6">
-            Download a blank DNR template that can be completed,
-            signed and uploaded as part of this registration process.
+            Download a blank MyDNR template that you can complete,
+            sign and upload above as your DNR request.
           </p>
 
           <a

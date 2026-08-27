@@ -17,7 +17,7 @@ export default function CheckPage() {
 
     if (!cleanedId) {
       alert(
-        "Please enter the participant's South African ID Number."
+        "Please enter the South African ID Number of the person whose DNR record you would like to check."
       );
       return;
     }
@@ -78,8 +78,12 @@ export default function CheckPage() {
           <Image
             src="/images/mydnr-logo.png"
             alt="MyDNR South Africa"
-            width={300}
-            height={300}
+            width={330}
+            height={330}
+            style={{
+              width: "auto",
+              height: "auto",
+            }}
             priority
           />
         </div>
@@ -106,9 +110,14 @@ export default function CheckPage() {
           </h2>
 
           <p className="text-slate-600 leading-relaxed">
-            Enter the participant&apos;s South African ID Number below.
-            This service only confirms whether a DNR record exists.
-            No personal information will be displayed.
+            Enter the South African ID Number of the person whose
+            DNR record you would like to check.
+          </p>
+
+          <p className="text-slate-600 leading-relaxed mt-3">
+            This free service only confirms whether a DNR record
+            is registered with MyDNR. No personal information or
+            DNR document will be displayed.
           </p>
 
         </div>
@@ -140,7 +149,7 @@ export default function CheckPage() {
           />
 
           <p className="mt-2 text-sm text-slate-600">
-            Enter the participant&apos;s 13-digit South African ID Number
+            Enter the person&apos;s 13-digit South African ID Number
           </p>
 
         </div>

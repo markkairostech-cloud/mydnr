@@ -24,6 +24,36 @@ export default function DocumentRequestCompletePage() {
   const [downloading, setDownloading] =
     useState(false);
 
+  const [manualChecking, setManualChecking] =
+    useState(false);
+
+  const checkPaymentOnce = async (
+    id: string
+  ) => {
+    const response = await fetch(
+      `/api/document-request/status?requestId=${encodeURIComponent(
+        id
+      )}`,
+      {
+        cache: "no-store",
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      throw new Error(
+        result.error ||
+          "Unable to confirm payment."
+      );
+    }
+
+    return (
+      result.request?.payment_status ===
+      "paid"
+    );
+  };
+
   useEffect(() => {
     const params = new URLSearchParams(
       window.location.search
@@ -43,7 +73,7 @@ export default function DocumentRequestCompletePage() {
     setRequestId(requestIdFromUrl);
 
     let attempts = 0;
-    const maxAttempts = 10;
+    const maxAttempts = 30;
 
     let timer:
       | ReturnType<typeof setInterval>
@@ -53,30 +83,16 @@ export default function DocumentRequestCompletePage() {
       try {
         attempts += 1;
 
-        const response = await fetch(
-          `/api/document-request/status?requestId=${encodeURIComponent(
+        const paid =
+          await checkPaymentOnce(
             requestIdFromUrl
-          )}`,
-          {
-            cache: "no-store",
-          }
-        );
-
-        const result = await response.json();
-
-        if (!response.ok || !result.success) {
-          throw new Error(
-            result.error ||
-              "Unable to confirm payment."
           );
-        }
 
-        if (
-          result.request?.payment_status ===
-          "paid"
-        ) {
+        if (paid) {
           setPaymentState("paid");
-          setMessage("Payment confirmed.");
+          setMessage(
+            "Payment confirmed."
+          );
 
           localStorage.removeItem(
             "mydnr-document-request"
@@ -144,6 +160,59 @@ export default function DocumentRequestCompletePage() {
     };
   }, []);
 
+  const handleCheckAgain = async () => {
+    if (!requestId) {
+      setPaymentState("error");
+      setMessage(
+        "We could not identify this document request."
+      );
+      return;
+    }
+
+    try {
+      setManualChecking(true);
+      setPaymentState("checking");
+      setMessage(
+        "Checking your payment again..."
+      );
+
+      const paid =
+        await checkPaymentOnce(requestId);
+
+      if (paid) {
+        setPaymentState("paid");
+        setMessage(
+          "Payment confirmed."
+        );
+
+        localStorage.removeItem(
+          "mydnr-document-request"
+        );
+
+        return;
+      }
+
+      setPaymentState("pending");
+      setMessage(
+        "Your payment is still being confirmed."
+      );
+
+    } catch (error) {
+      console.error(
+        "MANUAL DOCUMENT PAYMENT STATUS ERROR:",
+        error
+      );
+
+      setPaymentState("error");
+      setMessage(
+        "We could not confirm your payment at this time."
+      );
+
+    } finally {
+      setManualChecking(false);
+    }
+  };
+
   const handleDownload = async () => {
     if (!requestId) {
       alert(
@@ -181,6 +250,7 @@ export default function DocumentRequestCompletePage() {
 
       window.location.href =
         result.signedUrl;
+
     } catch (error: any) {
       console.error(
         "DOCUMENT DOWNLOAD ERROR:",
@@ -191,6 +261,7 @@ export default function DocumentRequestCompletePage() {
         error?.message ||
           "Unable to retrieve the DNR document."
       );
+
     } finally {
       setDownloading(false);
     }
@@ -199,27 +270,44 @@ export default function DocumentRequestCompletePage() {
   if (paymentState !== "paid") {
     return (
       <main className="min-h-screen bg-white">
-        <div className="max-w-3xl mx-auto px-6 py-16">
+        <div className="max-w-3xl mx-auto px-6 py-12">
 
+          {/* Logo */}
           <div className="flex justify-center mb-6">
             <Image
               src="/images/mydnr-logo.png"
               alt="MyDNR South Africa"
-              width={300}
-              height={300}
+              width={330}
+              height={330}
+              style={{
+                width: "auto",
+                height: "auto",
+              }}
               priority
             />
           </div>
 
           <div className="text-center mb-10">
 
-            <div className="flex justify-center mb-6">
-              <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center">
-                <span className="text-4xl text-slate-700">
-                  …
-                </span>
+            {/* Active Spinner */}
+            {paymentState === "checking" && (
+              <div className="flex justify-center mb-6">
+                <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center">
+                  <div className="w-8 h-8 border-4 border-slate-300 border-t-slate-900 rounded-full animate-spin" />
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* Pending / Error Icon */}
+            {paymentState !== "checking" && (
+              <div className="flex justify-center mb-6">
+                <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center">
+                  <span className="text-4xl text-slate-700">
+                    …
+                  </span>
+                </div>
+              </div>
+            )}
 
             <h1 className="text-4xl font-bold text-slate-900 mb-4">
               Confirming Payment
@@ -231,7 +319,7 @@ export default function DocumentRequestCompletePage() {
 
           </div>
 
-          <div className="bg-slate-50 rounded-3xl p-10 mb-10 text-center">
+          <div className="bg-slate-50 rounded-3xl p-8 mb-8 text-center">
 
             {paymentState === "checking" && (
               <p className="text-slate-600 leading-relaxed">
@@ -242,30 +330,58 @@ export default function DocumentRequestCompletePage() {
             )}
 
             {paymentState === "pending" && (
-              <p className="text-slate-600 leading-relaxed">
-                Your payment notification has not yet been
-                received. Please do not make another payment.
-                Your document request remains recorded while
-                payment confirmation is completed.
-              </p>
+              <>
+                <p className="text-slate-600 leading-relaxed mb-6">
+                  Your payment notification has not yet
+                  reached MyDNR. Please do not make another
+                  payment. If you completed the PayFast
+                  payment, you can check again below.
+                </p>
+
+                <button
+                  onClick={handleCheckAgain}
+                  disabled={manualChecking}
+                  className="inline-block bg-slate-900 text-white px-8 py-3 rounded-xl font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {manualChecking
+                    ? "Checking Payment..."
+                    : "Check Payment Again"}
+                </button>
+              </>
             )}
 
             {paymentState === "error" && (
-              <p className="text-slate-600 leading-relaxed">
-                We were unable to verify this payment at this
-                time. Please do not make another payment if
-                you believe the transaction was completed.
-              </p>
+              <>
+                <p className="text-slate-600 leading-relaxed mb-6">
+                  We were unable to confirm your payment at
+                  this time. If you completed the PayFast
+                  payment, please do not make another payment.
+                  You can try checking again below.
+                </p>
+
+                <button
+                  onClick={handleCheckAgain}
+                  disabled={manualChecking}
+                  className="inline-block bg-slate-900 text-white px-8 py-3 rounded-xl font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {manualChecking
+                    ? "Checking Payment..."
+                    : "Check Payment Again"}
+                </button>
+              </>
             )}
 
           </div>
 
-          <Link
-            href="/"
-            className="block w-full bg-slate-900 text-white py-4 rounded-xl text-center font-medium"
-          >
-            Return Home
-          </Link>
+          {/* Do not show this while actively checking */}
+          {paymentState !== "checking" && (
+            <Link
+              href="/"
+              className="block w-full border border-slate-300 text-slate-700 py-4 rounded-xl text-center font-medium"
+            >
+              Return Home
+            </Link>
+          )}
 
         </div>
       </main>
@@ -274,18 +390,24 @@ export default function DocumentRequestCompletePage() {
 
   return (
     <main className="min-h-screen bg-white">
-      <div className="max-w-3xl mx-auto px-6 py-16">
+      <div className="max-w-3xl mx-auto px-6 py-12">
 
+        {/* Logo */}
         <div className="flex justify-center mb-6">
           <Image
             src="/images/mydnr-logo.png"
             alt="MyDNR South Africa"
-            width={300}
-            height={300}
+            width={330}
+            height={330}
+            style={{
+              width: "auto",
+              height: "auto",
+            }}
             priority
           />
         </div>
 
+        {/* Success Heading */}
         <div className="text-center mb-10">
 
           <div className="flex justify-center mb-6">
@@ -307,9 +429,10 @@ export default function DocumentRequestCompletePage() {
 
         </div>
 
-        <div className="bg-slate-50 rounded-3xl p-10 mb-10 text-center">
+        {/* Download Panel */}
+        <div className="bg-slate-50 rounded-3xl p-8 mb-8 text-center">
 
-          <h2 className="text-2xl font-semibold text-slate-800 mb-6">
+          <h2 className="text-2xl font-semibold text-slate-800 mb-5">
             Your DNR Document Is Ready
           </h2>
 
@@ -325,20 +448,20 @@ export default function DocumentRequestCompletePage() {
           >
             {downloading
               ? "Preparing Secure Document..."
-              : "Download Registered DNR Document"}
+              : "View Registered DNR Document"}
           </button>
 
           <p className="text-sm text-slate-500 mt-4">
-            The secure document link is temporary and expires
-            after a short period.
+            For your security, access to this document is temporary. You may view or download a copy while the secure link is active.
           </p>
 
         </div>
 
-        <div className="bg-slate-50 rounded-3xl p-8 mb-10">
+        {/* Completed Items */}
+        <div className="bg-slate-50 rounded-3xl p-6 mb-8">
 
           <h3 className="text-xl font-semibold text-slate-800 mb-4">
-            What Happens Next?
+            Your Document Request Is Ready
           </h3>
 
           <ul className="space-y-3 text-slate-600">
@@ -365,9 +488,10 @@ export default function DocumentRequestCompletePage() {
 
         </div>
 
-        <div className="bg-slate-50 rounded-3xl p-8 mb-10">
+        {/* Security Notice */}
+        <div className="bg-slate-50 rounded-3xl p-6 mb-8">
 
-          <h3 className="text-xl font-semibold text-slate-800 mb-4">
+          <h3 className="text-xl font-semibold text-slate-800 mb-3">
             Security Notice
           </h3>
 

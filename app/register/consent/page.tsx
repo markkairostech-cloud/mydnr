@@ -42,7 +42,7 @@ export default function ConsentPage() {
 
     if (!requiredRegistrationDataPresent) {
       alert(
-        "Participant details are incomplete. Please return to Step 1 and complete the required information."
+        "Your details are incomplete. Please return to Step 1 and complete the required information."
       );
       router.push("/register");
       return;
@@ -83,8 +83,12 @@ export default function ConsentPage() {
           <Image
             src="/images/mydnr-logo.png"
             alt="MyDNR South Africa"
-            width={300}
-            height={300}
+            width={330}
+            height={330}
+            style={{
+              width: "auto",
+              height: "auto",
+            }}
             priority
           />
         </div>
@@ -92,7 +96,7 @@ export default function ConsentPage() {
         {/* Page Heading */}
         <div className="text-center mb-10">
           <h1 className="text-4xl font-bold text-slate-900 mb-4">
-            Register a DNR Request
+            Register Your DNR Request
           </h1>
 
           <p className="text-slate-600">
@@ -114,8 +118,8 @@ export default function ConsentPage() {
           </h2>
 
           <p className="text-slate-600 leading-relaxed">
-            Before completing registration, please review and acknowledge
-            the statements below.
+            Before completing your registration, please review
+            and acknowledge the statements below.
           </p>
         </div>
 
@@ -127,7 +131,7 @@ export default function ConsentPage() {
               type="checkbox"
               checked={consent1}
               onChange={(e) => setConsent1(e.target.checked)}
-              className="mt-1 h-5 w-5"
+              className="mt-1 h-5 w-5 shrink-0"
             />
 
             <span className="text-slate-700">
@@ -142,13 +146,12 @@ export default function ConsentPage() {
               type="checkbox"
               checked={consent2}
               onChange={(e) => setConsent2(e.target.checked)}
-              className="mt-1 h-5 w-5"
+              className="mt-1 h-5 w-5 shrink-0"
             />
 
             <span className="text-slate-700">
               I confirm that the uploaded DNR document represents
-              the wishes of the participant and has been signed
-              accordingly.
+              my wishes and has been signed accordingly.
             </span>
           </label>
 
@@ -157,7 +160,7 @@ export default function ConsentPage() {
               type="checkbox"
               checked={consent3}
               onChange={(e) => setConsent3(e.target.checked)}
-              className="mt-1 h-5 w-5"
+              className="mt-1 h-5 w-5 shrink-0"
             />
 
             <span className="text-slate-700">
@@ -172,7 +175,7 @@ export default function ConsentPage() {
               type="checkbox"
               checked={consent4}
               onChange={(e) => setConsent4(e.target.checked)}
-              className="mt-1 h-5 w-5"
+              className="mt-1 h-5 w-5 shrink-0"
             />
 
             <span className="text-slate-700">
@@ -188,14 +191,15 @@ export default function ConsentPage() {
               type="checkbox"
               checked={consent5}
               onChange={(e) => setConsent5(e.target.checked)}
-              className="mt-1 h-5 w-5"
+              className="mt-1 h-5 w-5 shrink-0"
             />
 
             <span className="text-slate-700">
-              I understand that authorised users may perform a
-              DNR existence check using the participant&apos;s South
-              African ID Number and may request access to the
-              registered DNR document through the MyDNR service.
+              I understand that someone who knows my South African
+              ID Number may check whether I have a DNR record
+              registered with MyDNR and may request access to my
+              registered DNR document through the MyDNR retrieval
+              process.
             </span>
           </label>
 
@@ -212,8 +216,13 @@ export default function ConsentPage() {
             MyDNR acts as a secure document registration and retrieval
             service. Registration of a DNR document does not constitute
             medical advice, legal advice or validation of the document&apos;s
-            contents. Individuals are encouraged to discuss DNR decisions
-            with their healthcare providers and loved ones.
+            contents.
+          </p>
+
+          <p className="text-slate-600 leading-relaxed mt-4">
+            We encourage you to discuss your DNR wishes with your
+            healthcare practitioner and the people close to you, so they
+            understand your wishes should the document ever be needed.
           </p>
 
         </div>
