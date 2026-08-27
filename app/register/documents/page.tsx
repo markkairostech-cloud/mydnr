@@ -98,11 +98,9 @@ export default function RegisterPage() {
 
     try {
       /*
-       * Both documents are now sent to the
-       * MyDNR server.
-       *
-       * The browser no longer uploads
-       * directly to Supabase Storage.
+       * Both documents are sent to the
+       * MyDNR server for secure validation
+       * and upload.
        */
       const formData =
         new FormData();
@@ -140,11 +138,12 @@ export default function RegisterPage() {
       }
 
       if (
+        !result.uploadSessionId ||
         !result.idDocumentPath ||
         !result.dnrDocumentPath
       ) {
         throw new Error(
-          "Secure document paths were not returned."
+          "Secure upload information was not returned."
         );
       }
 
@@ -159,11 +158,18 @@ export default function RegisterPage() {
         ...existingData,
 
         /*
-         * Original filenames are kept only
-         * for the local registration flow/UI.
+         * This UUID links this pair of uploaded
+         * documents to the eventual registration.
+         */
+        uploadSessionId:
+          result.uploadSessionId,
+
+        /*
+         * Original filenames remain only in the
+         * local registration flow for display.
          *
-         * Supabase Storage uses opaque random
-         * filenames generated server-side.
+         * Supabase Storage continues to use
+         * opaque random filenames.
          */
         idDocumentName:
           idDocument.name,

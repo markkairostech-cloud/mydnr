@@ -126,6 +126,9 @@ export async function POST(req: Request) {
     | string
     | null = null;
 
+  const uploadSessionId =
+    crypto.randomUUID();
+
   try {
     /*
      * The browser sends both documents
@@ -184,10 +187,6 @@ export async function POST(req: Request) {
 
     /*
      * Use opaque random filenames.
-     *
-     * The participant's original filename,
-     * name, ID number or email address is
-     * never placed into the Storage path.
      */
     idDocumentPath =
       `${crypto.randomUUID()}.${validatedId.extension}`;
@@ -242,11 +241,6 @@ export async function POST(req: Request) {
       );
 
     if (dnrUploadError) {
-      /*
-       * If the second upload fails,
-       * remove the first document so
-       * we do not leave a partial pair.
-       */
       await supabase.storage
         .from("id-documents")
         .remove([
@@ -260,17 +254,74 @@ export async function POST(req: Request) {
       );
     }
 
+    /*
+     * Create the upload-session tracking row.
+     *
+     * At this stage the session is active
+     * and not yet linked to a registration.
+     */
+    const {
+      error: sessionError,
+    } = await supabase
+      .from(
+        "registration_upload_sessions"
+      )
+      .insert([
+        {
+          id:
+            uploadSessionId,
+
+          id_document_path:
+            idDocumentPath,
+
+          dnr_document_path:
+            dnrDocumentPath,
+
+          registration_id:
+            null,
+
+          completed_at:
+            null,
+
+          cleanup_status:
+            "active",
+        },
+      ]);
+
+    if (sessionError) {
+      /*
+       * If we cannot track the files,
+       * delete them immediately.
+       */
+      await supabase.storage
+        .from("id-documents")
+        .remove([
+          idDocumentPath,
+        ]);
+
+      await supabase.storage
+        .from("dnr-documents")
+        .remove([
+          dnrDocumentPath,
+        ]);
+
+      idDocumentPath = null;
+      dnrDocumentPath = null;
+
+      throw new Error(
+        `Upload session could not be created: ${sessionError.message}`
+      );
+    }
+
     console.log(
-      "REGISTRATION DOCUMENTS: uploaded securely"
+      "REGISTRATION DOCUMENTS: uploaded and tracked securely",
+      uploadSessionId
     );
 
-    /*
-     * Return only the opaque Storage paths.
-     *
-     * No public or signed URLs are created.
-     */
     return NextResponse.json({
       success: true,
+
+      uploadSessionId,
 
       idDocumentPath,
 
@@ -284,9 +335,8 @@ export async function POST(req: Request) {
     );
 
     /*
-     * Best-effort cleanup if an unexpected
-     * error happens after either file has
-     * already been stored.
+     * Best-effort cleanup for any files
+     * still remaining after an unexpected error.
      */
     try {
       const supabase =
