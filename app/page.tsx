@@ -109,7 +109,7 @@ export default function Home() {
               </p>
 
               <p className="font-semibold text-slate-800 mb-6">
-                Registration Fee: R25
+                Registration Fee: R400
               </p>
 
               <div className="mt-auto">
@@ -171,7 +171,7 @@ export default function Home() {
               </p>
 
               <p className="font-semibold text-slate-800 mb-6">
-                Retrieval Fee: R25
+                Retrieval Fee: R100
               </p>
 
               <div className="mt-auto">
@@ -181,6 +181,52 @@ export default function Home() {
                 >
                   Request
                 </Link>
+              </div>
+
+            </div>
+
+          </section>
+
+          {/* Revoke DNR Section */}
+          <section className="mt-8">
+
+            <div className="bg-slate-50 border border-slate-200 rounded-3xl p-8 md:p-10">
+
+              <div className="md:flex md:items-center md:justify-between gap-8">
+
+                <div className="flex-1">
+
+                  <div className="text-4xl mb-4">
+                    ↩️
+                  </div>
+
+                  <h3 className="text-xl font-semibold text-slate-900 mb-3">
+                    Revoke Your DNR
+                  </h3>
+
+                  <p className="text-slate-600 leading-relaxed max-w-2xl">
+                    DNR Wishes are deeply personal, if your wishes have changed, you can voluntarily revoke
+                    your registered DNR. Your identity will need to be
+                    verified before a revocation can be completed.
+                  </p>
+
+                  <p className="font-semibold text-slate-800 mt-4">
+                    Free Service
+                  </p>
+
+                </div>
+
+                <div className="mt-6 md:mt-0 md:w-56">
+
+                  <Link
+                    href="/revoke"
+                    className="block w-full bg-slate-900 text-white py-3 rounded-xl text-center font-medium"
+                  >
+                    Revoke My DNR
+                  </Link>
+
+                </div>
+
               </div>
 
             </div>
