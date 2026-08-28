@@ -29,6 +29,7 @@ export async function GET(req: Request) {
       .select("id")
       .eq("sa_id_number", saIdNumber)
       .eq("payment_status", "paid")
+      .eq("registration_status", "active")
       .limit(1);
 
     if (error) {
