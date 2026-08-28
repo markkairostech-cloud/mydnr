@@ -206,7 +206,7 @@ async function ensureStorageObjectDeleted(
  * Documents are deleted and verified FIRST.
  * Only after that do we delete the old database row.
  */
-async function removeSupersededRegistrations(
+async function supersedeOlderRegistrations(
   supabase: ReturnType<
     typeof getSupabaseAdmin
   >,
@@ -227,99 +227,112 @@ async function removeSupersededRegistrations(
         registration_status
       `
     )
-    .eq(
-      "sa_id_number",
-      saIdNumber
-    )
-    .neq(
-      "id",
-      currentRegistrationId
-    );
+    .eq("sa_id_number", saIdNumber)
+    .neq("id", currentRegistrationId)
+    .neq("registration_status", "superseded");
 
   if (olderRegistrationsError) {
     throw olderRegistrationsError;
   }
 
-  if (
-    !olderRegistrations ||
-    olderRegistrations.length === 0
-  ) {
+  if (!olderRegistrations?.length) {
     console.log(
-      "PAYFAST ITN: no older registrations found"
+      "PAYFAST ITN: no older registrations require superseding"
     );
-
     return;
   }
 
   console.log(
-    "PAYFAST ITN: older registrations found:",
+    "PAYFAST ITN: older registrations to supersede:",
     olderRegistrations.length
   );
 
-  /*
-   * Process each older registration individually.
-   *
-   * This keeps the operation retryable if one old
-   * record succeeds and another later one fails.
-   */
-  for (
-    const oldRegistration
-    of olderRegistrations
-  ) {
+  for (const oldRegistration of olderRegistrations) {
     console.log(
-      "PAYFAST ITN: removing superseded registration:",
+      "PAYFAST ITN: superseding registration:",
       oldRegistration.id
     );
 
-    /*
-     * 1. Remove and verify old ID document.
-     */
+    // Delete and independently verify removal of the old sensitive documents.
     await ensureStorageObjectDeleted(
       supabase,
       "id-documents",
       oldRegistration.id_document_path
     );
 
-    /*
-     * 2. Remove and verify old DNR document.
-     */
     await ensureStorageObjectDeleted(
       supabase,
       "dnr-documents",
       oldRegistration.dnr_document_path
     );
 
-    /*
-     * 3. Write an audit record before removing
-     *    the obsolete registration row.
-     */
+    // Keep the historical DB row for audit/FK integrity, but make it
+    // non-authoritative and remove stale pointers to deleted documents.
     const {
-      error: auditError,
+      data: supersededRegistration,
+      error: supersedeError,
     } = await supabase
+      .from("dnr_registrations")
+      .update({
+        registration_status: "superseded",
+        id_document_path: null,
+        dnr_document_path: null,
+      })
+      .eq("id", oldRegistration.id)
+      .neq("registration_status", "superseded")
+      .select("id")
+      .maybeSingle();
+
+    if (supersedeError) {
+      throw new Error(
+        `Unable to mark registration ${oldRegistration.id} as superseded: ${supersedeError.message}`
+      );
+    }
+
+    // A concurrent/retried ITN may already have completed this row.
+    if (!supersededRegistration) {
+      const {
+        data: currentOldRegistration,
+        error: currentOldRegistrationError,
+      } = await supabase
+        .from("dnr_registrations")
+        .select("id, registration_status")
+        .eq("id", oldRegistration.id)
+        .maybeSingle();
+
+      if (currentOldRegistrationError) {
+        throw currentOldRegistrationError;
+      }
+
+      if (
+        !currentOldRegistration ||
+        currentOldRegistration.registration_status !== "superseded"
+      ) {
+        throw new Error(
+          `Registration ${oldRegistration.id} could not be confirmed as superseded.`
+        );
+      }
+
+      console.log(
+        "PAYFAST ITN: registration already superseded:",
+        oldRegistration.id
+      );
+      continue;
+    }
+
+    const { error: auditError } = await supabase
       .from("audit_logs")
       .insert([
         {
-          event_type:
-            "dnr_registration_superseded",
-
-          sa_id_number:
-            saIdNumber,
-
-          registration_id:
-            oldRegistration.id,
-
+          event_type: "dnr_registration_superseded",
+          sa_id_number: saIdNumber,
+          registration_id: oldRegistration.id,
           previous_status:
-            oldRegistration.registration_status ||
-            null,
-
-          new_status:
-            "superseded",
-
-          documents_deleted:
-            true,
-
+            oldRegistration.registration_status || null,
+          new_status: "superseded",
+          documents_deleted: true,
           details:
-            `Registration superseded by newer paid registration ${currentRegistrationId}. Original identification and DNR documents were securely deleted and deletion was verified.`,
+            `Registration superseded by newer paid registration ${currentRegistrationId}. Historical registration metadata was retained for audit and referential integrity. Original identification and DNR documents were securely deleted and deletion was verified.`,
         },
       ]);
 
@@ -329,30 +342,8 @@ async function removeSupersededRegistrations(
       );
     }
 
-    /*
-     * 4. Delete the obsolete registration row.
-     *
-     * Storage has already been successfully
-     * cleaned before we reach this point.
-     */
-    const {
-      error: deleteRegistrationError,
-    } = await supabase
-      .from("dnr_registrations")
-      .delete()
-      .eq(
-        "id",
-        oldRegistration.id
-      );
-
-    if (deleteRegistrationError) {
-      throw new Error(
-        `Unable to remove superseded registration ${oldRegistration.id}: ${deleteRegistrationError.message}`
-      );
-    }
-
     console.log(
-      "PAYFAST ITN: superseded registration removed:",
+      "PAYFAST ITN: registration superseded:",
       oldRegistration.id
     );
   }
@@ -742,51 +733,53 @@ export async function POST(req: Request) {
     }
 
     /*
-     * 8. Remove every other registration belonging
+     * 8. Supersede every other registration belonging
      *    to this SA ID number.
      *
-     * This is the single control point that guarantees
-     * only one current registration remains after a
-     * successful payment.
+     * Historical rows remain for audit and foreign-key
+     * integrity, while only the newly paid registration
+     * remains authoritative.
      */
-    await removeSupersededRegistrations(
+    await supersedeOlderRegistrations(
       supabase,
       registrationId,
       registration.sa_id_number
     );
 
     /*
-     * 9. Final proof that only the newly paid
-     *    registration remains for this SA ID.
+     * 9. Final proof that there is exactly one
+     *    authoritative paid + active registration
+     *    for this SA ID, and that it is the newly
+     *    paid registration.
+     *
+     * Historical superseded rows may remain by design.
      */
     const {
-      data: remainingRegistrations,
-      error: remainingError,
+      data: authoritativeRegistrations,
+      error: authoritativeError,
     } = await supabase
       .from("dnr_registrations")
-      .select("id")
-      .eq(
-        "sa_id_number",
-        registration.sa_id_number
-      );
+      .select("id, payment_status, registration_status")
+      .eq("sa_id_number", registration.sa_id_number)
+      .eq("payment_status", "paid")
+      .eq("registration_status", "active");
 
-    if (remainingError) {
-      throw remainingError;
+    if (authoritativeError) {
+      throw authoritativeError;
     }
 
     if (
-      !remainingRegistrations ||
-      remainingRegistrations.length !== 1 ||
-      remainingRegistrations[0].id !==
-        registrationId
+      !authoritativeRegistrations ||
+      authoritativeRegistrations.length !== 1 ||
+      authoritativeRegistrations[0].id !== registrationId
     ) {
       throw new Error(
-        "Registration cleanup did not leave exactly one authoritative DNR registration."
+        "Registration cleanup did not leave exactly one authoritative paid and active DNR registration."
       );
     }
 
     console.log(
-      "PAYFAST ITN: one authoritative registration confirmed"
+      "PAYFAST ITN: one authoritative paid + active registration confirmed"
     );
 
     console.log(
