@@ -9,6 +9,7 @@ export default function RequestDocumentPage() {
   const [requestorEmail, setRequestorEmail] = useState("");
   const [confirmed, setConfirmed] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     const params = new URLSearchParams(
@@ -24,34 +25,40 @@ export default function RequestDocumentPage() {
   }, []);
 
   const handleContinue = async () => {
+    /*
+     * Clear any previous inline message whenever
+     * the user makes another attempt.
+     */
+    setErrorMessage("");
+
     const cleanedId = saIdNumber.trim();
     const cleanedName = requestorName.trim();
     const cleanedEmail =
       requestorEmail.trim().toLowerCase();
 
     if (!cleanedId) {
-      alert(
+      setErrorMessage(
         "Please enter the South African ID Number of the person whose DNR document you are requesting."
       );
       return;
     }
 
     if (!/^\d{13}$/.test(cleanedId)) {
-      alert(
+      setErrorMessage(
         "Please enter a valid 13-digit South African ID Number."
       );
       return;
     }
 
     if (!cleanedName) {
-      alert(
+      setErrorMessage(
         "Please enter your Full Name."
       );
       return;
     }
 
     if (!cleanedEmail) {
-      alert(
+      setErrorMessage(
         "Please enter your Email Address."
       );
       return;
@@ -61,14 +68,14 @@ export default function RequestDocumentPage() {
       /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!emailPattern.test(cleanedEmail)) {
-      alert(
+      setErrorMessage(
         "Please enter a valid Email Address."
       );
       return;
     }
 
     if (!confirmed) {
-      alert(
+      setErrorMessage(
         "Please confirm that you have a legitimate need to access this DNR document and understand that your request will be recorded."
       );
       return;
@@ -84,7 +91,9 @@ export default function RequestDocumentPage() {
         consentConfirmed: true,
       };
 
-      // Step 1: Create document request
+      /*
+       * Step 1: Create document request.
+       */
       const requestResponse = await fetch(
         "/api/document-request",
         {
@@ -128,7 +137,9 @@ export default function RequestDocumentPage() {
         JSON.stringify(storedRequestData)
       );
 
-      // Step 2: Create PayFast payment request
+      /*
+       * Step 2: Create PayFast payment request.
+       */
       const payfastResponse = await fetch(
         "/api/document-request/payfast/start",
         {
@@ -167,7 +178,9 @@ export default function RequestDocumentPage() {
         );
       }
 
-      // Step 3: Submit hidden form to PayFast
+      /*
+       * Step 3: Submit hidden form to PayFast.
+       */
       const form =
         document.createElement("form");
 
@@ -196,7 +209,7 @@ export default function RequestDocumentPage() {
         error
       );
 
-      alert(
+      setErrorMessage(
         error?.message ||
           "Unable to start document retrieval payment."
       );
@@ -258,6 +271,23 @@ export default function RequestDocumentPage() {
 
         </div>
 
+        {/* Inline Status Message */}
+        {errorMessage && (
+          <div
+            role="alert"
+            aria-live="polite"
+            className="border border-slate-300 bg-slate-50 rounded-2xl p-5 mb-8"
+          >
+            <p className="font-semibold text-slate-900 mb-1">
+              Unable to Continue
+            </p>
+
+            <p className="text-slate-700 leading-relaxed">
+              {errorMessage}
+            </p>
+          </div>
+        )}
+
         {/* SA ID Number */}
         <div className="mb-6">
 
@@ -275,6 +305,10 @@ export default function RequestDocumentPage() {
               setSaIdNumber(
                 value.slice(0, 13)
               );
+
+              if (errorMessage) {
+                setErrorMessage("");
+              }
             }}
             placeholder="_ _ _ _ _ _ _ _ _ _ _ _ _"
             maxLength={13}
@@ -299,9 +333,13 @@ export default function RequestDocumentPage() {
           <input
             type="text"
             value={requestorName}
-            onChange={(e) =>
-              setRequestorName(e.target.value)
-            }
+            onChange={(e) => {
+              setRequestorName(e.target.value);
+
+              if (errorMessage) {
+                setErrorMessage("");
+              }
+            }}
             className="w-full border border-slate-300 rounded-xl px-4 py-4 focus:outline-none focus:ring-2 focus:ring-slate-400"
           />
 
@@ -317,9 +355,13 @@ export default function RequestDocumentPage() {
           <input
             type="email"
             value={requestorEmail}
-            onChange={(e) =>
-              setRequestorEmail(e.target.value)
-            }
+            onChange={(e) => {
+              setRequestorEmail(e.target.value);
+
+              if (errorMessage) {
+                setErrorMessage("");
+              }
+            }}
             className="w-full border border-slate-300 rounded-xl px-4 py-4 focus:outline-none focus:ring-2 focus:ring-slate-400"
           />
 
@@ -333,9 +375,13 @@ export default function RequestDocumentPage() {
             <input
               type="checkbox"
               checked={confirmed}
-              onChange={(e) =>
-                setConfirmed(e.target.checked)
-              }
+              onChange={(e) => {
+                setConfirmed(e.target.checked);
+
+                if (errorMessage) {
+                  setErrorMessage("");
+                }
+              }}
               className="mt-1 h-5 w-5 shrink-0"
             />
 
