@@ -271,22 +271,22 @@ export default function RequestDocumentPage() {
 
         </div>
 
-        {/* Inline Status Message */}
-        {errorMessage && (
-          <div
-            role="alert"
-            aria-live="polite"
-            className="border border-slate-300 bg-slate-50 rounded-2xl p-5 mb-8"
-          >
-            <p className="font-semibold text-slate-900 mb-1">
-              Unable to Continue
-            </p>
+          {/* Inline Status Message */}
+          {errorMessage && (
+            <div
+              role="alert"
+              aria-live="polite"
+              className="border-2 border-slate-400 bg-slate-50 rounded-2xl p-6 mb-8"
+            >
+              <p className="text-xl font-bold text-slate-950 mb-2">
+                Unable to Continue
+              </p>
 
-            <p className="text-slate-700 leading-relaxed">
-              {errorMessage}
-            </p>
-          </div>
-        )}
+              <p className="text-base font-semibold text-slate-900 leading-relaxed">
+                {errorMessage}
+              </p>
+            </div>
+          )}
 
         {/* SA ID Number */}
         <div className="mb-6">
