@@ -267,7 +267,8 @@ async function supersedeOlderRegistrations(
     );
 
     // Keep the historical DB row for audit/FK integrity, but make it
-    // non-authoritative and remove stale pointers to deleted documents.
+    // non-authoritative. The document-path columns are NOT NULL, so the
+    // historical path values remain even though the Storage objects are gone.
     const {
       data: supersededRegistration,
       error: supersedeError,
@@ -275,8 +276,6 @@ async function supersedeOlderRegistrations(
       .from("dnr_registrations")
       .update({
         registration_status: "superseded",
-        id_document_path: null,
-        dnr_document_path: null,
       })
       .eq("id", oldRegistration.id)
       .neq("registration_status", "superseded")
