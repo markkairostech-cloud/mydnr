@@ -105,9 +105,6 @@ export async function GET(req: Request) {
 
     /*
      * 3. Retrieve the specific document request.
-     *
-     * maybeSingle() allows us to return a clean 404
-     * instead of converting a missing row into a 500.
      */
     const {
       data: documentRequest,
@@ -192,8 +189,6 @@ export async function GET(req: Request) {
 
     /*
      * 6. Verify the access token.
-     *
-     * Only the SHA-256 hash is stored in Supabase.
      */
     if (
       !documentRequest.access_token_hash
@@ -292,9 +287,9 @@ export async function GET(req: Request) {
      * 8. Retrieve the exact DNR registration
      *    linked to this document request.
      *
-     * We no longer search using the SA ID Number,
-     * which removes ambiguity if multiple historical
-     * registrations exist for the same person.
+     * The registration itself must still be the
+     * current authoritative paid + active record
+     * at the moment access is granted.
      */
     const {
       data: registration,
@@ -302,7 +297,12 @@ export async function GET(req: Request) {
     } = await supabase
       .from("dnr_registrations")
       .select(
-        "id, dnr_document_path, payment_status"
+        `
+          id,
+          dnr_document_path,
+          payment_status,
+          registration_status
+        `
       )
       .eq(
         "id",
@@ -327,19 +327,22 @@ export async function GET(req: Request) {
       );
     }
 
-    /*
-     * The underlying registration must also still
-     * represent a successfully paid registration.
-     */
     if (
-      registration.payment_status !==
-      "paid"
+      registration.payment_status !== "paid" ||
+      registration.registration_status !== "active"
     ) {
+      console.warn(
+        "DOCUMENT DOWNLOAD: linked registration is not active:",
+        requestId,
+        registration.id,
+        registration.registration_status
+      );
+
       return NextResponse.json(
         {
           success: false,
           error:
-            "The registered DNR record is not available for retrieval.",
+            "The registered DNR record is no longer available for retrieval.",
         },
         {
           status: 403,
@@ -393,8 +396,6 @@ export async function GET(req: Request) {
      * 10. Audit the actual granting of access.
      *
      * Fail closed if the audit record cannot be written.
-     * A sensitive DNR document should not be issued
-     * without an accompanying audit event.
      */
     const {
       error: auditError,
