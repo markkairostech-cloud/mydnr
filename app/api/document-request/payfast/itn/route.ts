@@ -118,7 +118,7 @@ export async function POST(req: Request) {
     );
 
     /*
-     * 1. Payment must be complete
+     * 1. Payment must be complete.
      */
     if (paymentStatus !== "COMPLETE") {
       console.log(
@@ -138,7 +138,7 @@ export async function POST(req: Request) {
     );
 
     /*
-     * 2. Required identifiers
+     * 2. Required identifiers.
      */
     if (!requestId) {
       console.error(
@@ -171,7 +171,7 @@ export async function POST(req: Request) {
     );
 
     /*
-     * 3. Merchant ID validation
+     * 3. Merchant ID validation.
      */
     if (
       !configuredMerchantId ||
@@ -210,7 +210,7 @@ export async function POST(req: Request) {
     );
 
     /*
-     * 4. Signature validation
+     * 4. Signature validation.
      */
     if (!receivedSignature) {
       console.error(
@@ -252,7 +252,7 @@ export async function POST(req: Request) {
     );
 
     /*
-     * 5. Amount validation
+     * 5. Amount validation.
      */
     if (!amountGross) {
       console.error(
@@ -295,7 +295,7 @@ export async function POST(req: Request) {
     );
 
     /*
-     * 6. Find the document request
+     * 6. Find the document request.
      */
     const supabase =
       getSupabaseAdmin();
@@ -306,7 +306,13 @@ export async function POST(req: Request) {
     } = await supabase
       .from("document_requests")
       .select(
-        "id, payment_status, payment_reference, paid_at"
+        `
+          id,
+          registration_id,
+          payment_status,
+          payment_reference,
+          paid_at
+        `
       )
       .eq(
         "id",
@@ -337,14 +343,114 @@ export async function POST(req: Request) {
     );
 
     /*
-     * 7. Idempotency
+     * 7. The retrieval request must still be linked
+     *    to an exact DNR registration.
+     */
+    if (!documentRequest.registration_id) {
+      console.error(
+        "DOCUMENT REQUEST ITN: rejected - request has no registration ID:",
+        requestId
+      );
+
+      return new NextResponse(
+        "Registration not linked",
+        {
+          status: 403,
+        }
+      );
+    }
+
+    /*
+     * 8. The linked DNR must still be the current
+     *    authoritative paid + active registration.
      *
-     * Do not process the same payment twice.
+     * This check happens at payment confirmation time,
+     * not only when the request was originally created.
+     */
+    const {
+      data: registration,
+      error: registrationError,
+    } = await supabase
+      .from("dnr_registrations")
+      .select(
+        `
+          id,
+          payment_status,
+          registration_status
+        `
+      )
+      .eq(
+        "id",
+        documentRequest.registration_id
+      )
+      .maybeSingle();
+
+    if (registrationError) {
+      throw registrationError;
+    }
+
+    if (!registration) {
+      console.error(
+        "DOCUMENT REQUEST ITN: rejected - linked registration not found:",
+        requestId,
+        documentRequest.registration_id
+      );
+
+      return new NextResponse(
+        "Registration not found",
+        {
+          status: 404,
+        }
+      );
+    }
+
+    if (
+      registration.payment_status !== "paid" ||
+      registration.registration_status !== "active"
+    ) {
+      console.warn(
+        "DOCUMENT REQUEST ITN: rejected - linked registration is no longer active:",
+        requestId,
+        registration.id,
+        registration.registration_status
+      );
+
+      return new NextResponse(
+        "DNR registration no longer available",
+        {
+          status: 403,
+        }
+      );
+    }
+
+    /*
+     * 9. Idempotency.
+     *
+     * If already paid, verify that the same PayFast
+     * payment reference is being replayed.
      */
     if (
       documentRequest.payment_status ===
       "paid"
     ) {
+      if (
+        documentRequest.payment_reference &&
+        documentRequest.payment_reference !==
+          payfastPaymentId
+      ) {
+        console.error(
+          "DOCUMENT REQUEST ITN: rejected - payment reference mismatch:",
+          requestId
+        );
+
+        return new NextResponse(
+          "Payment reference mismatch",
+          {
+            status: 409,
+          }
+        );
+      }
+
       console.log(
         "DOCUMENT REQUEST ITN: already processed"
       );
@@ -358,8 +464,8 @@ export async function POST(req: Request) {
     }
 
     /*
-     * 8. Start the secure retrieval window
-     *    from the moment payment is confirmed.
+     * 10. Start the secure retrieval window
+     *     from the moment payment is confirmed.
      */
     const paidAt =
       new Date();
@@ -374,10 +480,11 @@ export async function POST(req: Request) {
       );
 
     /*
-     * 9. Mark the document request as paid
-     *    and start the 24-hour access window.
+     * 11. Mark the document request as paid
+     *     and start the 24-hour access window.
      */
     const {
+      data: updatedRequest,
       error: updateError,
     } = await supabase
       .from("document_requests")
@@ -400,7 +507,9 @@ export async function POST(req: Request) {
       .neq(
         "payment_status",
         "paid"
-      );
+      )
+      .select("id")
+      .maybeSingle();
 
     if (updateError) {
       console.error(
@@ -409,6 +518,20 @@ export async function POST(req: Request) {
       );
 
       throw updateError;
+    }
+
+    if (!updatedRequest) {
+      console.warn(
+        "DOCUMENT REQUEST ITN: request was not updated - possible concurrent processing:",
+        requestId
+      );
+
+      return new NextResponse(
+        "Already processed",
+        {
+          status: 200,
+        }
+      );
     }
 
     console.log(
