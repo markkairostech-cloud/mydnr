@@ -278,7 +278,7 @@ export default function PaymentPage() {
           </p>
 
           <p className="text-5xl font-bold text-slate-900 mb-2">
-            R25
+            R400
           </p>
 
           <p className="text-slate-500 mb-3">
@@ -321,7 +321,7 @@ export default function PaymentPage() {
           >
             {saving
               ? "Connecting to PayFast..."
-              : "Complete Registration & Pay R25"}
+              : "Complete Registration & Pay R400"}
           </button>
 
         </div>

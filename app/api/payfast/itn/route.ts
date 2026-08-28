@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
-const EXPECTED_REGISTRATION_AMOUNT = 25.0;
+const EXPECTED_REGISTRATION_AMOUNT = 400.0;
 
 /*
  * IMPORTANT:

@@ -108,7 +108,10 @@ export async function POST(req: Request) {
       );
     }
 
-    const amount = "25.00";
+    /*
+     * MyDNR registration fee.
+     */
+    const amount = "400.00";
 
     const m_payment_id = registrationId;
 
@@ -129,21 +132,16 @@ export async function POST(req: Request) {
     const fields: Record<string, string> = {
       merchant_id,
       merchant_key,
-
       return_url,
       cancel_url,
       notify_url,
-
       name_first: fullName,
       email_address: email,
-
       m_payment_id,
       amount,
-
       item_name: "MyDNR Registration",
       item_description:
         "DNR Registration Fee",
-
       custom_str1: saIdNumber,
       custom_str2: email,
       custom_str3: fullName,

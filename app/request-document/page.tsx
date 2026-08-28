@@ -404,7 +404,7 @@ export default function RequestDocumentPage() {
           </p>
 
           <p className="text-5xl font-bold text-slate-900 mb-2">
-            R25
+            R100
           </p>
 
           <p className="text-slate-500">
@@ -437,7 +437,7 @@ export default function RequestDocumentPage() {
         >
           {processing
             ? "Connecting to PayFast..."
-            : "Pay R25 & Continue"}
+            : "Pay R100 & Continue"}
         </button>
 
       </div>

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
-const EXPECTED_RETRIEVAL_AMOUNT = 25.0;
+const EXPECTED_RETRIEVAL_AMOUNT = 100.0;
 const ACCESS_WINDOW_HOURS = 24;
 
 /*
