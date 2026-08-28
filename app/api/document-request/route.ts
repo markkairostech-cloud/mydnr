@@ -104,8 +104,11 @@ export async function POST(req: Request) {
       getSupabaseAdmin();
 
     /*
-     * Find the most recent paid registration
-     * for this South African ID Number.
+     * Find the current authoritative DNR
+     * registration for this South African ID Number.
+     *
+     * Only a paid + active registration may be
+     * requested for retrieval.
      */
     const {
       data: registration,
@@ -120,6 +123,10 @@ export async function POST(req: Request) {
       .eq(
         "payment_status",
         "paid"
+      )
+      .eq(
+        "registration_status",
+        "active"
       )
       .order(
         "created_at",
@@ -139,7 +146,7 @@ export async function POST(req: Request) {
         {
           success: false,
           error:
-            "No paid DNR registration exists for this ID Number.",
+            "No active DNR registration exists for this ID Number.",
         },
         {
           status: 404,
@@ -255,7 +262,6 @@ export async function POST(req: Request) {
     );
 
     return response;
-
   } catch (error: any) {
     console.error(
       "DOCUMENT REQUEST ERROR:",
@@ -265,6 +271,7 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         success: false,
+
         error:
           error?.message ||
           "Unable to create document request.",
