@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 export default function RequestDocumentPage() {
@@ -219,228 +220,565 @@ export default function RequestDocumentPage() {
   };
 
   return (
-    <main className="min-h-screen bg-white">
-      <div className="max-w-3xl mx-auto px-6 py-12">
+    <main className="min-h-screen bg-[#f5f9fd] text-slate-950">
 
-        {/* Logo */}
-        <div className="flex justify-center mb-5">
-          <Image
-            src="/images/mydnr-logo.png"
-            alt="MyDNR South Africa"
-            width={330}
-            height={330}
-            style={{
-              width: "auto",
-              height: "auto",
-            }}
-            priority
-          />
+      {/* HEADER */}
+      <header className="border-b border-blue-100 bg-white">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 sm:px-8">
+
+          <Link href="/" aria-label="Back to MyDNR home">
+            <Image
+              src="/images/mydnr-logo.png"
+              alt="MyDNR South Africa"
+              width={72}
+              height={72}
+              className="h-auto w-[54px] sm:w-[62px]"
+              priority
+            />
+          </Link>
+
+          <Link
+            href="/"
+            className="rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-sm font-semibold text-blue-700 transition hover:bg-blue-50"
+          >
+            Back to MyDNR
+          </Link>
+
         </div>
+      </header>
 
-        {/* Page Heading */}
-        <div className="text-center mb-8">
+      {/* PAGE INTRO */}
+      <section className="border-b border-blue-100 bg-[#eef6fd]">
+        <div className="mx-auto max-w-4xl px-5 py-10 sm:px-8 sm:py-14">
 
-          <h1 className="text-4xl font-bold text-slate-900 mb-3">
+          <p className="mb-3 text-xs font-bold uppercase tracking-[0.28em] text-blue-600">
+            Secure Document Retrieval
+          </p>
+
+          <h1 className="max-w-3xl text-3xl font-bold leading-tight text-slate-950 sm:text-4xl">
             Request a DNR Document
           </h1>
 
-          <p className="text-slate-600">
-            Securely request access to a DNR document registered with MyDNR.
+          <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
+            Securely request access to a DNR document
+            registered with MyDNR.
           </p>
 
         </div>
+      </section>
 
-        {/* Information Panel */}
-        <div className="bg-slate-50 rounded-3xl p-7 mb-8 text-center">
+      {/* MAIN CONTENT */}
+      <section className="mx-auto max-w-4xl px-5 py-8 sm:px-8 sm:py-10">
 
-          <h2 className="text-2xl font-semibold text-slate-800 mb-3">
-            Document Retrieval Request
-          </h2>
+        <div className="overflow-hidden rounded-[28px] border border-blue-100 bg-white shadow-[0_16px_45px_rgba(15,23,42,0.06)]">
 
-          <p className="text-slate-600 leading-relaxed mb-3">
-            Request a registered DNR document when it is needed.
-          </p>
+          {/* INTRO PANEL */}
+          <div className="border-b border-blue-100 bg-[#f8fbff] px-6 py-7 sm:px-9 sm:py-8">
 
-          <p className="text-slate-600 leading-relaxed">
-            Enter the details below to securely request a DNR document
-            registered with MyDNR. This service helps loved ones,
-            caregivers and healthcare practitioners access a person&apos;s
-            registered wishes when they may be unable to communicate
-            them themselves.
-          </p>
+            <div className="flex items-start gap-4">
 
-        </div>
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-xl font-bold text-blue-700">
+                ↓
+              </div>
 
-          {/* Inline Status Message */}
-          {errorMessage && (
-            <div
-              role="alert"
-              aria-live="polite"
-              className="border-2 border-slate-400 bg-slate-50 rounded-2xl p-6 mb-8"
-            >
-              <p className="text-xl font-bold text-slate-950 mb-2">
-                Unable to Continue
-              </p>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.22em] text-blue-600">
+                  Document Retrieval Request
+                </p>
 
-              <p className="text-base font-semibold text-slate-900 leading-relaxed">
-                {errorMessage}
-              </p>
+                <h2 className="mt-2 text-2xl font-bold text-slate-950">
+                  Request a Registered DNR
+                </h2>
+
+                <p className="mt-3 max-w-2xl leading-7 text-slate-600">
+                  This service helps loved ones, caregivers and
+                  healthcare practitioners request access to a
+                  person&apos;s registered DNR wishes when they may
+                  be unable to communicate them themselves.
+                </p>
+              </div>
+
             </div>
-          )}
+          </div>
 
-        {/* SA ID Number */}
-        <div className="mb-6">
+          <div className="space-y-8 px-6 py-8 sm:px-9 sm:py-10">
 
-          <label className="block text-xl font-semibold text-slate-800 mb-3">
-            South African ID Number
-          </label>
+            {/* PROCESS EXPLANATION */}
+            <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-5">
 
-          <input
-            type="text"
-            value={saIdNumber}
-            onChange={(e) => {
-              const value =
-                e.target.value.replace(/\D/g, "");
+              <div className="flex items-start gap-3">
 
-              setSaIdNumber(
-                value.slice(0, 13)
-              );
+                <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">
+                  i
+                </div>
 
-              if (errorMessage) {
-                setErrorMessage("");
-              }
-            }}
-            placeholder="_ _ _ _ _ _ _ _ _ _ _ _ _"
-            maxLength={13}
-            inputMode="numeric"
-            className="w-full border border-slate-300 rounded-xl px-4 py-4 text-center text-xl tracking-[0.4em] font-medium focus:outline-none focus:ring-2 focus:ring-slate-400"
-          />
+                <div>
+                  <p className="font-semibold text-slate-900">
+                    Secure document access
+                  </p>
 
-          <p className="mt-3 text-base font-medium text-slate-700">
-            Enter the 13-digit South African ID Number of the person
-            whose DNR document you are requesting.
-          </p>
+                  <p className="mt-1 text-sm leading-6 text-slate-600">
+                    Enter the details below to request the
+                    registered DNR document. Your request will
+                    be recorded for security and audit purposes.
+                  </p>
+                </div>
+
+              </div>
+            </div>
+
+            {/* INLINE ERROR */}
+            {errorMessage && (
+              <div
+                role="alert"
+                aria-live="polite"
+                className="rounded-2xl border border-rose-200 bg-rose-50 p-5 sm:p-6"
+              >
+                <div className="flex items-start gap-4">
+
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-rose-100 font-bold text-rose-700">
+                    !
+                  </div>
+
+                  <div>
+                    <p className="font-bold text-rose-900">
+                      Unable to Continue
+                    </p>
+
+                    <p className="mt-1 text-sm leading-6 text-rose-800">
+                      {errorMessage}
+                    </p>
+                  </div>
+
+                </div>
+              </div>
+            )}
+
+            {/* REQUEST DETAILS */}
+            <div>
+
+              <div className="mb-6">
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-600">
+                  DNR Record
+                </p>
+
+                <h3 className="mt-2 text-xl font-bold text-slate-950">
+                  Whose DNR document are you requesting?
+                </h3>
+              </div>
+
+              {/* SA ID NUMBER */}
+              <div>
+                <label
+                  htmlFor="saIdNumber"
+                  className="mb-2 block text-sm font-semibold text-slate-900"
+                >
+                  South African ID Number
+                </label>
+
+                <input
+                  id="saIdNumber"
+                  type="text"
+                  value={saIdNumber}
+                  onChange={(e) => {
+                    const value =
+                      e.target.value.replace(/\D/g, "");
+
+                    setSaIdNumber(
+                      value.slice(0, 13)
+                    );
+
+                    if (errorMessage) {
+                      setErrorMessage("");
+                    }
+                  }}
+                  placeholder="0000000000000"
+                  maxLength={13}
+                  inputMode="numeric"
+                  autoComplete="off"
+                  className="w-full rounded-xl border border-blue-100 bg-white px-4 py-4 text-center text-xl font-semibold tracking-[0.18em] text-slate-900 outline-none transition placeholder:font-normal placeholder:text-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 sm:text-2xl sm:tracking-[0.28em]"
+                />
+
+                <div className="mt-2 flex items-start justify-between gap-4">
+                  <p className="text-sm leading-6 text-slate-500">
+                    Enter the 13-digit South African ID Number
+                    of the person whose DNR document you are
+                    requesting.
+                  </p>
+
+                  <span className="shrink-0 text-xs font-semibold text-slate-400">
+                    {saIdNumber.length}/13
+                  </span>
+                </div>
+              </div>
+
+            </div>
+
+            <div className="border-t border-blue-100" />
+
+            {/* REQUESTOR DETAILS */}
+            <div>
+
+              <div className="mb-6">
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-600">
+                  Your Details
+                </p>
+
+                <h3 className="mt-2 text-xl font-bold text-slate-950">
+                  Who is requesting the document?
+                </h3>
+
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  These details form part of the security and
+                  audit record for this request.
+                </p>
+              </div>
+
+              <div className="space-y-6">
+
+                {/* FULL NAME */}
+                <div>
+                  <label
+                    htmlFor="requestorName"
+                    className="mb-2 block text-sm font-semibold text-slate-900"
+                  >
+                    Your Full Name
+                  </label>
+
+                  <input
+                    id="requestorName"
+                    type="text"
+                    value={requestorName}
+                    onChange={(e) => {
+                      setRequestorName(
+                        e.target.value
+                      );
+
+                      if (errorMessage) {
+                        setErrorMessage("");
+                      }
+                    }}
+                    autoComplete="name"
+                    className="w-full rounded-xl border border-blue-100 bg-white px-4 py-4 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  />
+                </div>
+
+                {/* EMAIL */}
+                <div>
+                  <label
+                    htmlFor="requestorEmail"
+                    className="mb-2 block text-sm font-semibold text-slate-900"
+                  >
+                    Email Address
+                  </label>
+
+                  <input
+                    id="requestorEmail"
+                    type="email"
+                    value={requestorEmail}
+                    onChange={(e) => {
+                      setRequestorEmail(
+                        e.target.value
+                      );
+
+                      if (errorMessage) {
+                        setErrorMessage("");
+                      }
+                    }}
+                    autoComplete="email"
+                    className="w-full rounded-xl border border-blue-100 bg-white px-4 py-4 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  />
+
+                  <p className="mt-2 text-sm leading-6 text-slate-500">
+                    Your email address will be recorded with
+                    this document request.
+                  </p>
+                </div>
+
+              </div>
+            </div>
+
+            {/* CONFIRMATION */}
+            <label
+              className={`flex cursor-pointer items-start gap-4 rounded-2xl border p-5 transition sm:p-6 ${
+                confirmed
+                  ? "border-blue-300 bg-blue-50/70"
+                  : "border-blue-100 bg-[#fbfdff] hover:border-blue-200"
+              }`}
+            >
+
+              <input
+                type="checkbox"
+                checked={confirmed}
+                onChange={(e) => {
+                  setConfirmed(
+                    e.target.checked
+                  );
+
+                  if (errorMessage) {
+                    setErrorMessage("");
+                  }
+                }}
+                className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer accent-blue-600"
+              />
+
+              <div>
+                <p className="mb-1 text-xs font-bold uppercase tracking-[0.16em] text-blue-600">
+                  Required Confirmation
+                </p>
+
+                <span className="text-sm leading-6 text-slate-700 sm:text-base sm:leading-7">
+                  I confirm that I am requesting this DNR
+                  document because I have a legitimate need
+                  to access it and understand that this request
+                  will be recorded for security and audit
+                  purposes.
+                </span>
+              </div>
+
+            </label>
+
+            {/* FEE PANEL */}
+            <div className="overflow-hidden rounded-2xl border border-blue-200 bg-blue-50/60">
+
+              <div className="p-7 text-center sm:p-8">
+
+                <p className="text-xs font-bold uppercase tracking-[0.22em] text-blue-600">
+                  Document Retrieval Fee
+                </p>
+
+                <div className="mt-3 flex items-baseline justify-center">
+                  <span className="text-5xl font-bold tracking-tight text-slate-950 sm:text-6xl">
+                    R100
+                  </span>
+                </div>
+
+                <p className="mt-2 font-semibold text-slate-700">
+                  One-time document retrieval fee
+                </p>
+
+                <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-slate-600">
+                  Payment is required before the registered
+                  DNR document can be released through the
+                  MyDNR retrieval process.
+                </p>
+
+              </div>
+
+              <div className="border-t border-blue-100 bg-white/60 px-6 py-4 text-center">
+                <p className="text-xs leading-5 text-slate-500">
+                  You will be transferred to PayFast to
+                  complete your payment securely.
+                </p>
+              </div>
+
+            </div>
+
+            {/* IMPORTANT NOTICE */}
+            <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-6 sm:p-7">
+
+              <div className="flex items-start gap-4">
+
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 font-bold text-amber-700">
+                  !
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-bold text-slate-950">
+                    Important Notice
+                  </h3>
+
+                  <p className="mt-3 text-sm leading-6 text-slate-700 sm:text-base sm:leading-7">
+                    All document retrieval requests are
+                    recorded for audit and security purposes.
+                    MyDNR may retain a record of the request,
+                    including the requestor&apos;s details,
+                    date and time of access.
+                  </p>
+                </div>
+
+              </div>
+            </div>
+
+            {/* PAYMENT BUTTON */}
+            <div className="border-t border-blue-100 pt-7">
+
+              <button
+                type="button"
+                onClick={handleContinue}
+                disabled={processing}
+                className="w-full rounded-xl bg-blue-600 px-6 py-4 text-center font-bold text-white shadow-md transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-200 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {processing
+                  ? "Connecting to PayFast..."
+                  : "Pay R100 & Continue"}
+              </button>
+
+              <p className="mt-4 text-center text-xs leading-5 text-slate-500">
+                Your document request is recorded before
+                you are transferred to PayFast.
+              </p>
+
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* HOW IT WORKS */}
+      <section className="mx-auto max-w-4xl px-5 pb-10 sm:px-8 sm:pb-12">
+
+        <div className="grid gap-4 sm:grid-cols-3">
+
+          <div className="rounded-2xl border border-blue-100 bg-white p-5 text-center">
+            <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700">
+              1
+            </div>
+
+            <p className="mt-3 text-sm font-semibold text-slate-900">
+              Submit Request
+            </p>
+
+            <p className="mt-1 text-xs leading-5 text-slate-500">
+              Provide the DNR ID Number and your
+              requestor details.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-blue-100 bg-white p-5 text-center">
+            <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700">
+              2
+            </div>
+
+            <p className="mt-3 text-sm font-semibold text-slate-900">
+              Pay Securely
+            </p>
+
+            <p className="mt-1 text-xs leading-5 text-slate-500">
+              Complete the R100 retrieval payment
+              through PayFast.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-blue-100 bg-white p-5 text-center">
+            <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700">
+              3
+            </div>
+
+            <p className="mt-3 text-sm font-semibold text-slate-900">
+              Secure Retrieval
+            </p>
+
+            <p className="mt-1 text-xs leading-5 text-slate-500">
+              Continue through the MyDNR document
+              retrieval process.
+            </p>
+          </div>
 
         </div>
+      </section>
 
-        {/* Your Full Name */}
-        <div className="mb-6">
+      {/* REASSURANCE */}
+      <section className="border-t border-blue-100 bg-[#eef6fd]">
 
-          <label className="block text-xl font-semibold text-slate-800 mb-3">
-            Your Full Name
-          </label>
+        <div className="mx-auto grid max-w-4xl gap-5 px-5 py-8 sm:grid-cols-3 sm:px-8">
 
-          <input
-            type="text"
-            value={requestorName}
-            onChange={(e) => {
-              setRequestorName(e.target.value);
+          <div className="text-center">
+            <div className="text-lg text-blue-600">
+              ✓
+            </div>
 
-              if (errorMessage) {
-                setErrorMessage("");
-              }
-            }}
-            className="w-full border border-slate-300 rounded-xl px-4 py-4 focus:outline-none focus:ring-2 focus:ring-slate-400"
-          />
+            <p className="mt-1 text-sm font-semibold text-slate-900">
+              Secure request
+            </p>
+          </div>
 
-        </div>
+          <div className="text-center">
+            <div className="text-lg text-blue-600">
+              ✓
+            </div>
 
-        {/* Email Address */}
-        <div className="mb-6">
+            <p className="mt-1 text-sm font-semibold text-slate-900">
+              Audit recorded
+            </p>
+          </div>
 
-          <label className="block text-xl font-semibold text-slate-800 mb-3">
-            Email Address
-          </label>
+          <div className="text-center">
+            <div className="text-lg text-blue-600">
+              ✓
+            </div>
 
-          <input
-            type="email"
-            value={requestorEmail}
-            onChange={(e) => {
-              setRequestorEmail(e.target.value);
-
-              if (errorMessage) {
-                setErrorMessage("");
-              }
-            }}
-            className="w-full border border-slate-300 rounded-xl px-4 py-4 focus:outline-none focus:ring-2 focus:ring-slate-400"
-          />
+            <p className="mt-1 text-sm font-semibold text-slate-900">
+              PayFast checkout
+            </p>
+          </div>
 
         </div>
+      </section>
 
-        {/* Confirmation Checkbox */}
-        <div className="bg-slate-50 rounded-3xl p-6 mb-8">
+      {/* FOOTER */}
+      <footer className="border-t border-blue-100 bg-white">
 
-          <label className="flex items-start gap-4">
+        <div className="mx-auto flex max-w-6xl flex-col gap-6 px-5 py-7 sm:px-8 md:flex-row md:items-center md:justify-between">
 
-            <input
-              type="checkbox"
-              checked={confirmed}
-              onChange={(e) => {
-                setConfirmed(e.target.checked);
+          <div className="flex items-center gap-4">
 
-                if (errorMessage) {
-                  setErrorMessage("");
-                }
-              }}
-              className="mt-1 h-5 w-5 shrink-0"
+            <Image
+              src="/images/mydnr-logo.png"
+              alt="MyDNR"
+              width={48}
+              height={48}
+              className="h-auto w-[38px]"
             />
 
-            <span className="text-slate-700 leading-relaxed">
-              I confirm that I am requesting this DNR document
-              because I have a legitimate need to access it and
-              understand that this request will be recorded for
-              security and audit purposes.
-            </span>
+            <p className="text-sm text-slate-500">
+              Secure DNR registration &amp; retrieval.
+            </p>
 
-          </label>
+          </div>
+
+          <nav className="flex flex-wrap gap-x-5 gap-y-3 text-sm text-slate-500">
+
+            <Link
+              href="/privacy"
+              className="hover:text-blue-700"
+            >
+              Privacy
+            </Link>
+
+            <Link
+              href="/terms"
+              className="hover:text-blue-700"
+            >
+              Terms
+            </Link>
+
+            <Link
+              href="/disclaimer"
+              className="hover:text-blue-700"
+            >
+              Disclaimer
+            </Link>
+
+            <Link
+              href="/contact"
+              className="hover:text-blue-700"
+            >
+              Contact
+            </Link>
+
+            <Link
+              href="/about"
+              className="hover:text-blue-700"
+            >
+              About
+            </Link>
+
+          </nav>
 
         </div>
+      </footer>
 
-        {/* Fee Panel */}
-        <div className="border border-slate-200 rounded-3xl p-7 mb-8 text-center">
-
-          <p className="text-slate-600 mb-2">
-            Document Retrieval Fee
-          </p>
-
-          <p className="text-5xl font-bold text-slate-900 mb-2">
-            R100
-          </p>
-
-          <p className="text-slate-500">
-            One-time document retrieval fee
-          </p>
-
-        </div>
-
-        {/* Important Notice */}
-        <div className="bg-slate-50 rounded-3xl p-6 mb-8">
-
-          <h3 className="text-xl font-semibold text-slate-800 mb-3">
-            Important Notice
-          </h3>
-
-          <p className="text-slate-600 leading-relaxed">
-            All document retrieval requests are recorded for audit
-            and security purposes. MyDNR may retain a record of
-            the request, including the requestor&apos;s details,
-            date and time of access.
-          </p>
-
-        </div>
-
-        {/* Payment Button */}
-        <button
-          onClick={handleContinue}
-          disabled={processing}
-          className="w-full bg-slate-900 text-white py-4 rounded-xl font-medium disabled:opacity-60 disabled:cursor-not-allowed"
-        >
-          {processing
-            ? "Connecting to PayFast..."
-            : "Pay R100 & Continue"}
-        </button>
-
-      </div>
     </main>
   );
 }

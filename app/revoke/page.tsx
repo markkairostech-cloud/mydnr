@@ -108,7 +108,7 @@ export default function RevokeDNRPage() {
     event: React.ChangeEvent<HTMLInputElement>
   ) {
     setSaIdNumber(
-      event.target.value.replace(/\D/g, "")
+      event.target.value.replace(/\D/g, "").slice(0, 13)
     );
 
     setLookupResult(null);
@@ -386,1015 +386,1055 @@ export default function RevokeDNRPage() {
   }
 
   return (
-    <main className="min-h-screen bg-white">
-      <div className="max-w-3xl mx-auto px-6 py-12">
+    <main className="min-h-screen bg-[#f5f9fd] text-slate-950">
 
-        {/* Logo */}
-        <div className="flex justify-center mb-1">
-          <Image
-            src="/images/mydnr-logo.png"
-            alt="MyDNR South Africa"
-            width={450}
-            height={450}
-            priority
-            style={{
-              width: "auto",
-              height: "auto",
-            }}
-          />
+      {/* HEADER */}
+      <header className="border-b border-blue-100 bg-white">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 sm:px-8">
+
+          <Link
+            href="/"
+            aria-label="Back to MyDNR home"
+          >
+            <Image
+              src="/images/mydnr-logo.png"
+              alt="MyDNR South Africa"
+              width={72}
+              height={72}
+              className="h-auto w-[54px] sm:w-[62px]"
+              priority
+            />
+          </Link>
+
+          <Link
+            href="/"
+            className="rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-sm font-semibold text-blue-700 transition hover:bg-blue-50"
+          >
+            Back to MyDNR
+          </Link>
+
         </div>
+      </header>
 
-        {/* Header */}
-        <section className="text-center mb-10">
+      {/* PAGE INTRO */}
+      <section className="border-b border-blue-100 bg-[#eef6fd]">
+        <div className="mx-auto max-w-4xl px-5 py-9 sm:px-8 sm:py-12">
 
-          <p className="text-sm font-semibold text-blue-700 mb-2">
+          <p className="mb-3 text-xs font-bold uppercase tracking-[0.28em] text-blue-600">
             Voluntary DNR Revocation
           </p>
 
-          <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
+          <h1 className="text-3xl font-bold leading-tight text-slate-950 sm:text-4xl">
             Revoke Your DNR
           </h1>
 
-          <p className="text-lg text-slate-600 leading-relaxed max-w-2xl mx-auto">
-            If your wishes have changed, you can request the voluntary
-            revocation of your registered DNR.
+          <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
+            If your wishes have changed, you can request the
+            voluntary revocation of your registered DNR.
           </p>
 
-        </section>
+        </div>
+      </section>
 
-        {/* Step Indicator */}
-        <section className="mb-8">
+      {/* MAIN CONTENT */}
+      <section className="mx-auto max-w-4xl px-5 py-8 sm:px-8 sm:py-10">
 
-          <div className="flex items-center justify-between text-sm text-slate-500 mb-3">
+        {/* STEP INDICATOR */}
+        <div className="mb-6 rounded-2xl border border-blue-100 bg-white p-5 shadow-sm sm:p-6">
 
-            <span className="font-semibold text-slate-900">
+          <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+
+            <span className="font-bold text-slate-900">
               Step {currentStep} of 5
             </span>
 
-            <span>
+            <span className="text-sm text-slate-500">
               {getStepLabel()}
             </span>
 
           </div>
 
-          <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-
+          <div className="h-2.5 w-full overflow-hidden rounded-full bg-blue-100">
             <div
-              className={`h-full bg-slate-900 rounded-full transition-all ${getProgressWidth()}`}
+              className={`h-full rounded-full bg-blue-600 transition-all duration-300 ${getProgressWidth()}`}
             />
-
           </div>
 
-        </section>
+        </div>
 
         {/* STEP 1 */}
         {currentStep === 1 && (
           <>
+            <div className="overflow-hidden rounded-[28px] border border-blue-100 bg-white shadow-[0_16px_45px_rgba(15,23,42,0.06)]">
 
-            <section className="border border-slate-200 rounded-3xl p-7 md:p-10 shadow-sm">
+              <div className="border-b border-blue-100 bg-[#f8fbff] px-6 py-7 sm:px-9 sm:py-8">
 
-              <div className="mb-8">
+                <div className="flex items-start gap-4">
 
-                <div className="text-4xl mb-4">
-                  🔍
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-xl font-bold text-blue-700">
+                    1
+                  </div>
+
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-600">
+                      Locate Registration
+                    </p>
+
+                    <h2 className="mt-2 text-2xl font-bold text-slate-950">
+                      Find Your DNR Registration
+                    </h2>
+
+                    <p className="mt-3 leading-7 text-slate-600">
+                      Enter your 13-digit South African ID number
+                      so we can locate your active DNR registration.
+                    </p>
+                  </div>
+
                 </div>
-
-                <h2 className="text-2xl font-semibold text-slate-900 mb-3">
-                  Find Your DNR Registration
-                </h2>
-
-                <p className="text-slate-600 leading-relaxed">
-                  Enter your 13-digit South African ID number so we can
-                  locate your active DNR registration.
-                </p>
-
               </div>
 
-              <form onSubmit={handleSubmit}>
+              <div className="px-6 py-8 sm:px-9 sm:py-10">
 
-                <label
-                  htmlFor="saIdNumber"
-                  className="block font-medium text-slate-800 mb-2"
-                >
-                  South African ID Number
-                </label>
+                <form onSubmit={handleSubmit}>
 
-                <input
-                  id="saIdNumber"
-                  name="saIdNumber"
-                  type="text"
-                  inputMode="numeric"
-                  autoComplete="off"
-                  maxLength={13}
-                  value={saIdNumber}
-                  onChange={handleIdChange}
-                  placeholder="Enter your 13-digit ID number"
-                  disabled={isLoading}
-                  className="
-                    w-full
-                    border
-                    border-slate-300
-                    rounded-xl
-                    px-4
-                    py-3
-                    text-slate-900
-                    outline-none
-                    focus:ring-2
-                    focus:ring-slate-900
-                    focus:border-transparent
-                    disabled:bg-slate-100
-                    disabled:cursor-not-allowed
-                  "
-                />
+                  <label
+                    htmlFor="saIdNumber"
+                    className="mb-2 block text-sm font-semibold text-slate-900"
+                  >
+                    South African ID Number
+                  </label>
 
-                <p className="text-sm text-slate-500 mt-2">
-                  Your ID number is used only to locate your existing
-                  MyDNR registration.
-                </p>
+                  <input
+                    id="saIdNumber"
+                    name="saIdNumber"
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    maxLength={13}
+                    value={saIdNumber}
+                    onChange={handleIdChange}
+                    placeholder="0000000000000"
+                    disabled={isLoading}
+                    className="w-full rounded-xl border border-blue-100 bg-white px-4 py-4 text-center text-xl font-semibold tracking-[0.18em] text-slate-900 outline-none transition placeholder:font-normal placeholder:text-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 sm:text-2xl sm:tracking-[0.28em]"
+                  />
 
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="
-                    mt-7
-                    w-full
-                    bg-slate-900
-                    text-white
-                    py-3
-                    rounded-xl
-                    font-medium
-                    hover:bg-slate-800
-                    transition
-                    disabled:opacity-60
-                    disabled:cursor-not-allowed
-                  "
-                >
-                  {isLoading
-                    ? "Checking..."
-                    : "Find My DNR"}
-                </button>
+                  <div className="mt-2 flex items-start justify-between gap-4">
 
-              </form>
+                    <p className="text-sm leading-6 text-slate-500">
+                      Your ID number is used only to locate your
+                      existing MyDNR registration.
+                    </p>
 
-              {lookupResult === "found" && (
-                <div className="mt-7 rounded-2xl border border-slate-200 bg-slate-50 p-5">
-
-                  <div className="flex gap-3">
-
-                    <div className="text-2xl">
-                      ✓
-                    </div>
-
-                    <div className="flex-1">
-
-                      <h3 className="font-semibold text-slate-900 mb-1">
-                        Active DNR Registration Found
-                      </h3>
-
-                      <p className="text-sm text-slate-600 leading-relaxed">
-                        An active MyDNR registration was found for this
-                        ID number. Before the revocation can proceed,
-                        we need you to provide identity evidence.
-                      </p>
-
-                      <button
-                        type="button"
-                        onClick={
-                          handleContinueToVerification
-                        }
-                        className="
-                          mt-5
-                          w-full
-                          bg-slate-900
-                          text-white
-                          py-3
-                          rounded-xl
-                          font-medium
-                          hover:bg-slate-800
-                          transition
-                        "
-                      >
-                        Continue to Identity Verification
-                      </button>
-
-                    </div>
+                    <span className="shrink-0 text-xs font-semibold text-slate-400">
+                      {saIdNumber.length}/13
+                    </span>
 
                   </div>
 
-                </div>
-              )}
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="mt-7 w-full rounded-xl bg-blue-600 px-6 py-4 font-bold text-white shadow-md transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-200 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isLoading
+                      ? "Checking Registration..."
+                      : "Find My DNR"}
+                  </button>
 
-              {lookupResult === "not-found" && (
-                <div className="mt-7 rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                </form>
 
-                  <div className="flex gap-3">
+                {lookupResult === "found" && (
+                  <div className="mt-7 rounded-2xl border border-blue-200 bg-blue-50/70 p-5 sm:p-6">
 
-                    <div className="text-2xl">
-                      ℹ️
+                    <div className="flex items-start gap-4">
+
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-600 font-bold text-white">
+                        ✓
+                      </div>
+
+                      <div className="flex-1">
+
+                        <h3 className="font-bold text-slate-900">
+                          Active DNR Registration Found
+                        </h3>
+
+                        <p className="mt-2 text-sm leading-6 text-slate-600">
+                          An active MyDNR registration was found
+                          for this ID number. Before the revocation
+                          can proceed, we need you to provide
+                          identity evidence.
+                        </p>
+
+                        <button
+                          type="button"
+                          onClick={
+                            handleContinueToVerification
+                          }
+                          className="mt-5 w-full rounded-xl bg-blue-600 px-5 py-3.5 font-bold text-white transition hover:bg-blue-700"
+                        >
+                          Continue to Identity Verification
+                        </button>
+
+                      </div>
                     </div>
-
-                    <div>
-
-                      <h3 className="font-semibold text-slate-900 mb-1">
-                        No Active DNR Registration Found
-                      </h3>
-
-                      <p className="text-sm text-slate-600 leading-relaxed">
-                        We could not locate an active DNR registration
-                        for this ID number.
-                      </p>
-
-                    </div>
-
                   </div>
+                )}
 
-                </div>
-              )}
+                {lookupResult === "not-found" && (
+                  <div className="mt-7 rounded-2xl border border-blue-100 bg-[#f8fbff] p-5 sm:p-6">
 
-              {lookupResult === "error" && (
-                <div className="mt-7 rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                    <div className="flex items-start gap-4">
 
-                  <div className="flex gap-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-100 font-bold text-blue-700">
+                        i
+                      </div>
 
-                    <div className="text-2xl">
-                      ⚠️
+                      <div>
+                        <h3 className="font-bold text-slate-900">
+                          No Active DNR Registration Found
+                        </h3>
+
+                        <p className="mt-2 text-sm leading-6 text-slate-600">
+                          We could not locate an active DNR
+                          registration for this ID number.
+                        </p>
+                      </div>
+
                     </div>
-
-                    <div>
-
-                      <h3 className="font-semibold text-slate-900 mb-1">
-                        Unable to Continue
-                      </h3>
-
-                      <p className="text-sm text-slate-600 leading-relaxed">
-                        {errorMessage}
-                      </p>
-
-                    </div>
-
                   </div>
+                )}
 
-                </div>
-              )}
+                {lookupResult === "error" && (
+                  <div
+                    role="alert"
+                    className="mt-7 rounded-2xl border border-rose-200 bg-rose-50 p-5 sm:p-6"
+                  >
+                    <div className="flex items-start gap-4">
 
-            </section>
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-rose-100 font-bold text-rose-700">
+                        !
+                      </div>
 
-            <section className="bg-slate-50 rounded-2xl p-5 mt-6">
+                      <div>
+                        <h3 className="font-bold text-rose-900">
+                          Unable to Continue
+                        </h3>
 
-              <p className="text-sm text-slate-600 leading-relaxed">
+                        <p className="mt-2 text-sm leading-6 text-rose-800">
+                          {errorMessage}
+                        </p>
+                      </div>
 
-                <span className="font-semibold text-slate-800">
-                  Privacy notice:
-                </span>{" "}
+                    </div>
+                  </div>
+                )}
 
-                We will not display any DNR document or personal
-                registration information at this stage. Identity
-                evidence is required before a revocation can proceed.
+              </div>
+            </div>
 
-              </p>
-
-            </section>
-
+            <PrivacyNotice>
+              We will not display any DNR document or personal
+              registration information at this stage. Identity
+              evidence is required before a revocation can proceed.
+            </PrivacyNotice>
           </>
         )}
 
         {/* STEP 2 */}
         {currentStep === 2 && (
           <>
+            <div className="overflow-hidden rounded-[28px] border border-blue-100 bg-white shadow-[0_16px_45px_rgba(15,23,42,0.06)]">
 
-            <section className="border border-slate-200 rounded-3xl p-7 md:p-10 shadow-sm">
+              <div className="border-b border-blue-100 bg-[#f8fbff] px-6 py-7 sm:px-9 sm:py-8">
 
-              <div className="mb-8">
+                <div className="flex items-start gap-4">
 
-                <div className="text-4xl mb-4">
-                  🪪
-                </div>
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-xl font-bold text-blue-700">
+                    2
+                  </div>
 
-                <h2 className="text-2xl font-semibold text-slate-900 mb-3">
-                  Provide Identity Evidence
-                </h2>
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-600">
+                      Identity Protection
+                    </p>
 
-                <p className="text-slate-600 leading-relaxed">
-                  To help protect your DNR from unauthorised removal,
-                  please upload a clear copy of your current South
-                  African identity document or Smart ID card.
-                </p>
+                    <h2 className="mt-2 text-2xl font-bold text-slate-950">
+                      Provide Identity Evidence
+                    </h2>
 
-              </div>
-
-              {!revocationRequestId && (
-                <form onSubmit={handleIdentityUpload}>
-
-                  <label
-                    htmlFor="idDocument"
-                    className="block font-medium text-slate-800 mb-2"
-                  >
-                    Identification Document
-                  </label>
-
-                  <input
-                    id="idDocument"
-                    name="idDocument"
-                    type="file"
-                    accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
-                    onChange={
-                      handleFileChange
-                    }
-                    disabled={isUploading}
-                    className="
-                      block
-                      w-full
-                      border
-                      border-slate-300
-                      rounded-xl
-                      px-4
-                      py-3
-                      text-slate-700
-                      bg-white
-                      disabled:bg-slate-100
-                      disabled:cursor-not-allowed
-                    "
-                  />
-
-                  <p className="text-sm text-slate-500 mt-2">
-                    Accepted formats: PDF, JPG, JPEG or PNG. Maximum
-                    file size: 10 MB.
-                  </p>
-
-                  {idDocument && (
-                    <div className="mt-5 rounded-xl bg-slate-50 border border-slate-200 p-4">
-
-                      <p className="text-sm font-medium text-slate-800">
-                        Selected file
-                      </p>
-
-                      <p className="text-sm text-slate-600 mt-1 break-all">
-                        {idDocument.name}
-                      </p>
-
-                    </div>
-                  )}
-
-                  {uploadError && (
-                    <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
-
-                      <p className="text-sm font-semibold text-slate-900">
-                        Unable to upload
-                      </p>
-
-                      <p className="text-sm text-slate-600 mt-1">
-                        {uploadError}
-                      </p>
-
-                    </div>
-                  )}
-
-                  <button
-                    type="submit"
-                    disabled={
-                      isUploading ||
-                      !idDocument
-                    }
-                    className="
-                      mt-7
-                      w-full
-                      bg-slate-900
-                      text-white
-                      py-3
-                      rounded-xl
-                      font-medium
-                      hover:bg-slate-800
-                      transition
-                      disabled:opacity-60
-                      disabled:cursor-not-allowed
-                    "
-                  >
-                    {isUploading
-                      ? "Uploading Securely..."
-                      : "Upload and Continue"}
-                  </button>
-
-                </form>
-              )}
-
-              {revocationRequestId && (
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
-
-                  <div className="flex gap-3">
-
-                    <div className="text-2xl">
-                      ✓
-                    </div>
-
-                    <div className="flex-1">
-
-                      <h3 className="font-semibold text-slate-900 mb-2">
-                        Identity Evidence Received
-                      </h3>
-
-                      <p className="text-sm text-slate-600 leading-relaxed">
-                        Your identification document has been securely
-                        received and linked to this revocation request.
-                      </p>
-
-                      <p className="text-sm text-slate-600 leading-relaxed mt-3">
-                        For this MVP, providing the document allows you
-                        to continue with the revocation process.
-                      </p>
-
-                      <button
-                        type="button"
-                        onClick={
-                          handleContinueToReview
-                        }
-                        className="
-                          mt-5
-                          w-full
-                          bg-slate-900
-                          text-white
-                          py-3
-                          rounded-xl
-                          font-medium
-                          hover:bg-slate-800
-                          transition
-                        "
-                      >
-                        Continue
-                      </button>
-
-                    </div>
-
+                    <p className="mt-3 leading-7 text-slate-600">
+                      To help protect your DNR from unauthorised
+                      removal, please upload a clear copy of your
+                      current South African identity document or
+                      Smart ID card.
+                    </p>
                   </div>
 
                 </div>
-              )}
+              </div>
 
-            </section>
+              <div className="px-6 py-8 sm:px-9 sm:py-10">
 
-            <section className="bg-slate-50 rounded-2xl p-5 mt-6">
+                {!revocationRequestId && (
+                  <form onSubmit={handleIdentityUpload}>
 
-              <p className="text-sm text-slate-600 leading-relaxed">
+                    <label
+                      htmlFor="idDocument"
+                      className="mb-3 block text-sm font-semibold text-slate-900"
+                    >
+                      Identification Document
+                    </label>
 
-                <span className="font-semibold text-slate-800">
-                  Privacy notice:
-                </span>{" "}
+                    <div className="rounded-2xl border-2 border-dashed border-blue-200 bg-[#fbfdff] p-6 text-center sm:p-8">
 
-                Your identification document is stored securely in a
-                private area and is used only as supporting evidence
-                for this revocation request.
+                      <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-xl font-bold text-blue-700">
+                        ↑
+                      </div>
 
-              </p>
+                      <p className="font-bold text-slate-900">
+                        Upload your identification document
+                      </p>
 
-            </section>
+                      <p className="mt-2 text-sm leading-6 text-slate-500">
+                        PDF, JPG, JPEG or PNG — maximum 10 MB
+                      </p>
 
-            <div className="text-center mt-6">
+                      <input
+                        id="idDocument"
+                        name="idDocument"
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                        onChange={
+                          handleFileChange
+                        }
+                        disabled={isUploading}
+                        className="mt-5 block w-full text-sm text-slate-500 disabled:opacity-60"
+                      />
 
-              <button
-                type="button"
-                onClick={() => {
-                  if (!isUploading) {
-                    setCurrentStep(1);
-                  }
-                }}
-                className="text-sm font-medium text-slate-600 hover:text-slate-900"
-              >
-                ← Back to Step 1
-              </button>
+                    </div>
 
+                    {idDocument && (
+                      <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
+
+                        <p className="text-sm font-bold text-slate-900">
+                          ✓ Identification document selected
+                        </p>
+
+                        <p className="mt-1 break-all text-sm text-slate-600">
+                          {idDocument.name}
+                        </p>
+
+                      </div>
+                    )}
+
+                    {uploadError && (
+                      <div
+                        role="alert"
+                        className="mt-5 rounded-2xl border border-rose-200 bg-rose-50 p-4"
+                      >
+                        <p className="text-sm font-bold text-rose-900">
+                          Unable to Upload
+                        </p>
+
+                        <p className="mt-1 text-sm leading-6 text-rose-800">
+                          {uploadError}
+                        </p>
+                      </div>
+                    )}
+
+                    <button
+                      type="submit"
+                      disabled={
+                        isUploading ||
+                        !idDocument
+                      }
+                      className="mt-7 w-full rounded-xl bg-blue-600 px-6 py-4 font-bold text-white shadow-md transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isUploading
+                        ? "Uploading Securely..."
+                        : "Upload Identity Document"}
+                    </button>
+
+                  </form>
+                )}
+
+                {revocationRequestId && (
+                  <div className="rounded-2xl border border-blue-200 bg-blue-50/70 p-6">
+
+                    <div className="flex items-start gap-4">
+
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-600 font-bold text-white">
+                        ✓
+                      </div>
+
+                      <div className="flex-1">
+
+                        <h3 className="font-bold text-slate-900">
+                          Identity Evidence Received
+                        </h3>
+
+                        <p className="mt-2 text-sm leading-6 text-slate-600">
+                          Your identification document has been
+                          securely received and linked to this
+                          revocation request.
+                        </p>
+
+                        <p className="mt-3 text-sm leading-6 text-slate-600">
+                          You can now continue to review what
+                          revocation means before making your
+                          final decision.
+                        </p>
+
+                        <button
+                          type="button"
+                          onClick={
+                            handleContinueToReview
+                          }
+                          className="mt-5 w-full rounded-xl bg-blue-600 px-5 py-3.5 font-bold text-white transition hover:bg-blue-700"
+                        >
+                          Continue to Revocation Review
+                        </button>
+
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+              </div>
             </div>
 
+            <PrivacyNotice>
+              Your identification document is stored securely in
+              a private area and is used only as supporting
+              evidence for this revocation request.
+            </PrivacyNotice>
+
+            <BackButton
+              label="Back to Step 1"
+              disabled={isUploading}
+              onClick={() => setCurrentStep(1)}
+            />
           </>
         )}
 
         {/* STEP 3 */}
         {currentStep === 3 && (
           <>
+            <div className="overflow-hidden rounded-[28px] border border-blue-100 bg-white shadow-[0_16px_45px_rgba(15,23,42,0.06)]">
 
-            <section className="border border-slate-200 rounded-3xl p-7 md:p-10 shadow-sm">
+              <div className="border-b border-blue-100 bg-[#f8fbff] px-6 py-7 sm:px-9 sm:py-8">
 
-              <div className="mb-8">
+                <div className="flex items-start gap-4">
 
-                <div className="text-4xl mb-4">
-                  📋
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-xl font-bold text-blue-700">
+                    3
+                  </div>
+
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-600">
+                      Before You Continue
+                    </p>
+
+                    <h2 className="mt-2 text-2xl font-bold text-slate-950">
+                      Review What Revocation Means
+                    </h2>
+
+                    <p className="mt-3 leading-7 text-slate-600">
+                      Please take a moment to understand what
+                      will happen if you choose to revoke your
+                      registered DNR.
+                    </p>
+                  </div>
+
                 </div>
-
-                <h2 className="text-2xl font-semibold text-slate-900 mb-3">
-                  Review What Revocation Means
-                </h2>
-
-                <p className="text-slate-600 leading-relaxed">
-                  Before you continue, please take a moment to understand
-                  what will happen if you choose to revoke your registered
-                  DNR.
-                </p>
-
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-4 px-6 py-8 sm:px-9 sm:py-10">
 
-                <div className="rounded-2xl border border-slate-200 p-5">
+                <ReviewItem
+                  title="Your registered DNR will no longer be active"
+                >
+                  Once the revocation is completed, MyDNR will
+                  no longer report this registration as an
+                  active DNR.
+                </ReviewItem>
 
-                  <div className="flex gap-4">
+                <ReviewItem
+                  title="Your DNR document will no longer be available"
+                >
+                  The registered DNR document will no longer
+                  be available through the MyDNR document
+                  retrieval service.
+                </ReviewItem>
 
-                    <div className="text-xl">
-                      ✓
+                <ReviewItem
+                  title="Stored registration documents will be removed"
+                >
+                  When the revocation is completed, the DNR
+                  document and identification document held
+                  as part of the original registration will
+                  be securely removed from MyDNR storage.
+                </ReviewItem>
+
+                <ReviewItem
+                  title="A revocation audit record will be retained"
+                >
+                  MyDNR will retain a non-documentary audit
+                  record of the completed revocation for seven
+                  years. This provides evidence that the
+                  revocation took place without retaining your
+                  original DNR document.
+                </ReviewItem>
+
+                <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50/70 p-6">
+
+                  <div className="flex items-start gap-4">
+
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 font-bold text-amber-700">
+                      !
                     </div>
 
                     <div>
-
-                      <h3 className="font-semibold text-slate-900 mb-1">
-                        Your registered DNR will no longer be active
+                      <h3 className="font-bold text-slate-950">
+                        Important
                       </h3>
 
-                      <p className="text-sm text-slate-600 leading-relaxed">
-                        Once the revocation is completed, MyDNR will no
-                        longer report this registration as an active DNR.
+                      <p className="mt-2 text-sm leading-6 text-slate-700">
+                        Revoking your MyDNR registration removes
+                        the DNR request held by MyDNR. It does
+                        not itself make decisions about other
+                        medical treatment, care plans or
+                        healthcare instructions that may exist
+                        elsewhere.
                       </p>
-
                     </div>
 
                   </div>
-
                 </div>
 
-                <div className="rounded-2xl border border-slate-200 p-5">
-
-                  <div className="flex gap-4">
-
-                    <div className="text-xl">
-                      🔒
-                    </div>
-
-                    <div>
-
-                      <h3 className="font-semibold text-slate-900 mb-1">
-                        Your DNR document will no longer be available
-                      </h3>
-
-                      <p className="text-sm text-slate-600 leading-relaxed">
-                        The registered DNR document will no longer be
-                        available through the MyDNR document retrieval
-                        service.
-                      </p>
-
-                    </div>
-
-                  </div>
-
-                </div>
-
-                <div className="rounded-2xl border border-slate-200 p-5">
-
-                  <div className="flex gap-4">
-
-                    <div className="text-xl">
-                      🗑️
-                    </div>
-
-                    <div>
-
-                      <h3 className="font-semibold text-slate-900 mb-1">
-                        Stored registration documents will be removed
-                      </h3>
-
-                      <p className="text-sm text-slate-600 leading-relaxed">
-                        When the revocation is completed, the DNR document
-                        and identification document held as part of the
-                        original registration will be securely removed
-                        from MyDNR storage.
-                      </p>
-
-                    </div>
-
-                  </div>
-
-                </div>
-
-                <div className="rounded-2xl border border-slate-200 p-5">
-
-                  <div className="flex gap-4">
-
-                    <div className="text-xl">
-                      🧾
-                    </div>
-
-                    <div>
-
-                      <h3 className="font-semibold text-slate-900 mb-1">
-                        A revocation audit record will be retained
-                      </h3>
-
-                      <p className="text-sm text-slate-600 leading-relaxed">
-                        MyDNR will retain a non-documentary audit record
-                        of the completed revocation for seven years. This
-                        provides evidence that the revocation took place
-                        without retaining your original DNR document.
-                      </p>
-
-                    </div>
-
-                  </div>
-
-                </div>
+                <button
+                  type="button"
+                  onClick={
+                    handleContinueToConfirmation
+                  }
+                  disabled={!revocationRequestId}
+                  className="mt-3 w-full rounded-xl bg-blue-600 px-6 py-4 font-bold text-white shadow-md transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  Continue to Final Confirmation
+                </button>
 
               </div>
-
-              <div className="mt-7 rounded-2xl bg-slate-50 p-5">
-
-                <h3 className="font-semibold text-slate-900 mb-2">
-                  Important
-                </h3>
-
-                <p className="text-sm text-slate-600 leading-relaxed">
-                  Revoking your MyDNR registration removes the DNR request
-                  held by MyDNR. It does not itself make decisions about
-                  other medical treatment, care plans or healthcare
-                  instructions that may exist elsewhere.
-                </p>
-
-              </div>
-
-              <button
-                type="button"
-                onClick={
-                  handleContinueToConfirmation
-                }
-                disabled={!revocationRequestId}
-                className="
-                  mt-7
-                  w-full
-                  bg-slate-900
-                  text-white
-                  py-3
-                  rounded-xl
-                  font-medium
-                  hover:bg-slate-800
-                  transition
-                  disabled:opacity-60
-                  disabled:cursor-not-allowed
-                "
-              >
-                Continue to Revocation Confirmation
-              </button>
-
-            </section>
-
-            <div className="text-center mt-6">
-
-              <button
-                type="button"
-                onClick={() =>
-                  setCurrentStep(2)
-                }
-                className="text-sm font-medium text-slate-600 hover:text-slate-900"
-              >
-                ← Back to Step 2
-              </button>
-
             </div>
 
+            <BackButton
+              label="Back to Step 2"
+              onClick={() => setCurrentStep(2)}
+            />
           </>
         )}
 
         {/* STEP 4 */}
         {currentStep === 4 && (
           <>
+            <div className="overflow-hidden rounded-[28px] border border-blue-100 bg-white shadow-[0_16px_45px_rgba(15,23,42,0.06)]">
 
-            <section className="border border-slate-200 rounded-3xl p-7 md:p-10 shadow-sm">
+              <div className="border-b border-blue-100 bg-[#f8fbff] px-6 py-7 sm:px-9 sm:py-8">
 
-              <div className="mb-8">
+                <div className="flex items-start gap-4">
 
-                <div className="text-4xl mb-4">
-                  ✓
-                </div>
-
-                <h2 className="text-2xl font-semibold text-slate-900 mb-3">
-                  Final Confirmation
-                </h2>
-
-                <p className="text-slate-600 leading-relaxed">
-                  Before your DNR can be revoked, please confirm each
-                  of the statements below.
-                </p>
-
-              </div>
-
-              <div className="space-y-4">
-
-                {/* Declaration 1 */}
-                <label className="block rounded-2xl border border-slate-200 p-5 cursor-pointer">
-
-                  <div className="flex items-start gap-4">
-
-                    <input
-                      type="checkbox"
-                      checked={
-                        confirmsVoluntaryRevocation
-                      }
-                      disabled={isRevoking}
-                      onChange={(event) =>
-                        setConfirmsVoluntaryRevocation(
-                          event.target.checked
-                        )
-                      }
-                      className="
-                        mt-1
-                        h-5
-                        w-5
-                        min-w-5
-                        shrink-0
-                        rounded
-                        border-slate-300
-                        accent-slate-900
-                        "
-                    />
-
-                    <div>
-
-                      <p className="font-medium text-slate-900 leading-relaxed">
-                        I confirm that I am voluntarily requesting the
-                        revocation of my registered DNR.
-                      </p>
-
-                    </div>
-
-                  </div>
-
-                </label>
-
-                {/* Declaration 2 */}
-                <label className="block rounded-2xl border border-slate-200 p-5 cursor-pointer">
-
-                  <div className="flex items-start gap-4">
-
-                    <input
-                      type="checkbox"
-                      checked={
-                        understandsConsequences
-                      }
-                      disabled={isRevoking}
-                      onChange={(event) =>
-                        setUnderstandsConsequences(
-                          event.target.checked
-                        )
-                      }
-                      className="
-                          mt-1
-                            h-5
-                            w-5
-                            min-w-5
-                            shrink-0
-                            rounded
-                            border-slate-300
-                            accent-slate-900
-                      "
-                    />
-
-                    <div>
-
-                      <p className="font-medium text-slate-900 leading-relaxed">
-                        I understand that once completed, my registered
-                        DNR will no longer be available through MyDNR
-                        and the stored registration documents will be
-                        removed.
-                      </p>
-
-                    </div>
-
-                  </div>
-
-                </label>
-
-                {/* Declaration 3 */}
-                <label className="block rounded-2xl border border-slate-200 p-5 cursor-pointer">
-
-                  <div className="flex items-start gap-4">
-
-                    <input
-                      type="checkbox"
-                      checked={
-                        confirmsIdentityDocument
-                      }
-                      disabled={isRevoking}
-                      onChange={(event) =>
-                        setConfirmsIdentityDocument(
-                          event.target.checked
-                        )
-                      }
-                      className="
-                        mt-1
-                        h-5
-                        w-5
-                        min-w-5
-                        shrink-0
-                        rounded
-                        border-slate-300
-                        accent-slate-900
-                      "
-                    />
-
-                    <div>
-
-                      <p className="font-medium text-slate-900 leading-relaxed">
-                        I confirm that the identification document I
-                        supplied belongs to me and was provided by me
-                        for this revocation request.
-                      </p>
-
-                    </div>
-
-                  </div>
-
-                </label>
-
-              </div>
-
-              {/* Warning */}
-              <div className="mt-7 rounded-2xl bg-slate-50 p-5">
-
-                <div className="flex gap-3">
-
-                  <div className="text-xl">
-                    ⚠️
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-xl font-bold text-blue-700">
+                    4
                   </div>
 
                   <div>
-
-                    <h3 className="font-semibold text-slate-900 mb-2">
-                      Please be certain before continuing
-                    </h3>
-
-                    <p className="text-sm text-slate-600 leading-relaxed">
-                      Once the revocation process is completed, this
-                      registered DNR will no longer be active through
-                      MyDNR and the associated registration documents
-                      will be removed.
+                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-600">
+                      Final Decision
                     </p>
 
+                    <h2 className="mt-2 text-2xl font-bold text-slate-950">
+                      Final Confirmation
+                    </h2>
+
+                    <p className="mt-3 leading-7 text-slate-600">
+                      Before your DNR can be revoked, please
+                      confirm each of the statements below.
+                    </p>
                   </div>
 
                 </div>
-
               </div>
 
-              {/* Final Button */}
-              <button
-                type="button"
-                onClick={handleConfirmRevocation}
-                disabled={
-                  !allDeclarationsConfirmed ||
-                  isRevoking
-                }
-                className="
-                  mt-7
-                  w-full
-                  bg-slate-900
-                  text-white
-                  py-3
-                  rounded-xl
-                  font-semibold
-                  hover:bg-slate-800
-                  transition
-                  disabled:opacity-40
-                  disabled:cursor-not-allowed
-                "
-              >
-                {isRevoking
-                  ? "Processing Revocation..."
-                  : "Confirm Revocation"}
-              </button>
+              <div className="space-y-5 px-6 py-8 sm:px-9 sm:py-10">
 
-              {revocationError && (
-                <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
-
-                  <p className="text-sm font-semibold text-slate-900">
-                    Unable to complete revocation
-                  </p>
-
-                  <p className="text-sm text-slate-600 mt-1 leading-relaxed">
-                    {revocationError}
-                  </p>
-
-                </div>
-              )}
-
-              {!allDeclarationsConfirmed && !isRevoking && (
-                <p className="text-sm text-slate-500 text-center mt-3">
-                  Please confirm all three statements before continuing.
-                </p>
-              )}
-
-            </section>
-
-            <div className="text-center mt-6">
-
-              <button
-                type="button"
-                onClick={() => {
-                  if (!isRevoking) {
-                    setCurrentStep(3);
+                <Declaration
+                  checked={confirmsVoluntaryRevocation}
+                  disabled={isRevoking}
+                  onChange={
+                    setConfirmsVoluntaryRevocation
                   }
-                }}
-                disabled={isRevoking}
-                className="text-sm font-medium text-slate-600 hover:text-slate-900 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                ← Back to Step 3
-              </button>
+                >
+                  I confirm that I am voluntarily requesting
+                  the revocation of my registered DNR.
+                </Declaration>
 
+                <Declaration
+                  checked={understandsConsequences}
+                  disabled={isRevoking}
+                  onChange={
+                    setUnderstandsConsequences
+                  }
+                >
+                  I understand that once completed, my
+                  registered DNR will no longer be available
+                  through MyDNR and the stored registration
+                  documents will be removed.
+                </Declaration>
+
+                <Declaration
+                  checked={confirmsIdentityDocument}
+                  disabled={isRevoking}
+                  onChange={
+                    setConfirmsIdentityDocument
+                  }
+                >
+                  I confirm that the identification document
+                  I supplied belongs to me and was provided
+                  by me for this revocation request.
+                </Declaration>
+
+                <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-6">
+
+                  <div className="flex items-start gap-4">
+
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 font-bold text-amber-700">
+                      !
+                    </div>
+
+                    <div>
+                      <h3 className="font-bold text-slate-950">
+                        Please Be Certain Before Continuing
+                      </h3>
+
+                      <p className="mt-2 text-sm leading-6 text-slate-700">
+                        Once the revocation process is completed,
+                        this registered DNR will no longer be
+                        active through MyDNR and the associated
+                        registration documents will be removed.
+                      </p>
+                    </div>
+
+                  </div>
+                </div>
+
+                {revocationError && (
+                  <div
+                    role="alert"
+                    className="rounded-2xl border border-rose-200 bg-rose-50 p-5"
+                  >
+                    <p className="font-bold text-rose-900">
+                      Unable to Complete Revocation
+                    </p>
+
+                    <p className="mt-1 text-sm leading-6 text-rose-800">
+                      {revocationError}
+                    </p>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleConfirmRevocation}
+                  disabled={
+                    !allDeclarationsConfirmed ||
+                    isRevoking
+                  }
+                  className="w-full rounded-xl bg-blue-600 px-6 py-4 font-bold text-white shadow-md transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-200 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {isRevoking
+                    ? "Processing Revocation..."
+                    : "Confirm DNR Revocation"}
+                </button>
+
+                {!allDeclarationsConfirmed &&
+                  !isRevoking && (
+                    <p className="text-center text-sm leading-6 text-slate-500">
+                      Please confirm all three statements
+                      before continuing.
+                    </p>
+                  )}
+
+              </div>
             </div>
 
+            <BackButton
+              label="Back to Step 3"
+              disabled={isRevoking}
+              onClick={() => setCurrentStep(3)}
+            />
           </>
         )}
 
         {/* STEP 5 */}
         {currentStep === 5 && (
-          <>
+          <div className="overflow-hidden rounded-[28px] border border-blue-100 bg-white shadow-[0_16px_45px_rgba(15,23,42,0.06)]">
 
-            <section className="border border-slate-200 rounded-3xl p-7 md:p-10 shadow-sm text-center">
+            <div className="border-b border-blue-100 bg-[#eef6fd] px-6 py-9 text-center sm:px-9 sm:py-11">
 
-              <div className="text-5xl mb-5">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-blue-600 text-3xl font-bold text-white shadow-md">
                 ✓
               </div>
 
-              <h2 className="text-2xl md:text-3xl font-semibold text-slate-900 mb-4">
+              <p className="mt-5 text-xs font-bold uppercase tracking-[0.25em] text-blue-600">
+                Revocation Complete
+              </p>
+
+              <h2 className="mt-3 text-3xl font-bold text-slate-950">
                 Your DNR Has Been Revoked
               </h2>
 
-              <p className="text-slate-600 leading-relaxed max-w-xl mx-auto">
-                Your MyDNR registration is no longer active. The original
-                registration documents and the temporary identity evidence
-                supplied for this revocation have been securely removed.
+              <p className="mx-auto mt-4 max-w-xl leading-7 text-slate-600">
+                Your MyDNR registration is no longer active.
+                The original registration documents and the
+                temporary identity evidence supplied for this
+                revocation have been securely removed.
               </p>
 
-              <div className="mt-7 rounded-2xl bg-slate-50 p-5 text-left">
+            </div>
 
-                <h3 className="font-semibold text-slate-900 mb-2">
-                  Revocation record retained
+            <div className="space-y-6 px-6 py-8 sm:px-9 sm:py-10">
+
+              <div className="rounded-2xl border border-blue-100 bg-[#f8fbff] p-6">
+
+                <div className="flex items-start gap-4">
+
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 font-bold text-blue-700">
+                    i
+                  </div>
+
+                  <div>
+                    <h3 className="font-bold text-slate-950">
+                      Revocation Record Retained
+                    </h3>
+
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      MyDNR will retain a non-documentary audit
+                      record of this completed revocation for
+                      seven years. Your original DNR document
+                      and identification documents are not
+                      retained as part of that audit record.
+                    </p>
+                  </div>
+
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-blue-100 bg-white p-6">
+
+                <h3 className="font-bold text-slate-950">
+                  If Your Wishes Change Again
                 </h3>
 
-                <p className="text-sm text-slate-600 leading-relaxed">
-                  MyDNR will retain a non-documentary audit record of this
-                  completed revocation for seven years. Your original DNR
-                  document and identification documents are not retained as
-                  part of that audit record.
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  A revoked registration cannot be restored.
+                  If you later decide that you want MyDNR to
+                  hold a new DNR request, you will need to
+                  complete a new registration.
                 </p>
 
               </div>
 
-              <div className="mt-7 rounded-2xl border border-slate-200 p-5 text-left">
+              <div className="grid gap-3 sm:grid-cols-3">
 
-                <h3 className="font-semibold text-slate-900 mb-2">
-                  If your wishes change again
-                </h3>
+                <CompletionItem>
+                  Registration inactive
+                </CompletionItem>
 
-                <p className="text-sm text-slate-600 leading-relaxed">
-                  A revoked registration cannot be restored. If you later
-                  decide that you want MyDNR to hold a new DNR request, you
-                  will need to complete a new registration.
-                </p>
+                <CompletionItem>
+                  Documents removed
+                </CompletionItem>
+
+                <CompletionItem>
+                  Audit retained
+                </CompletionItem>
 
               </div>
 
               <Link
                 href="/"
-                className="
-                  mt-7
-                  inline-flex
-                  w-full
-                  items-center
-                  justify-center
-                  bg-slate-900
-                  text-white
-                  py-3
-                  rounded-xl
-                  font-semibold
-                  hover:bg-slate-800
-                  transition
-                "
+                className="block w-full rounded-xl bg-blue-600 px-6 py-4 text-center font-bold text-white shadow-md transition hover:bg-blue-700"
               >
                 Return to MyDNR
               </Link>
 
-            </section>
-
-          </>
+            </div>
+          </div>
         )}
 
-        {/* Return to MyDNR */}
+        {/* RETURN HOME */}
         {currentStep !== 5 && (
-          <div className="text-center mt-8">
+          <div className="mt-7 text-center">
 
-          <Link
-            href="/"
-            className="text-sm font-medium text-slate-600 hover:text-slate-900"
-          >
-            ← Return to MyDNR
-          </Link>
+            <Link
+              href="/"
+              className="text-sm font-semibold text-slate-500 transition hover:text-blue-700"
+            >
+              ← Return to MyDNR
+            </Link>
 
           </div>
         )}
 
-      </div>
+      </section>
+
+      {/* REASSURANCE */}
+      <section className="border-t border-blue-100 bg-[#eef6fd]">
+
+        <div className="mx-auto grid max-w-4xl gap-5 px-5 py-8 sm:grid-cols-3 sm:px-8">
+
+          <ReassuranceItem>
+            Identity protected
+          </ReassuranceItem>
+
+          <ReassuranceItem>
+            Secure revocation
+          </ReassuranceItem>
+
+          <ReassuranceItem>
+            Audit recorded
+          </ReassuranceItem>
+
+        </div>
+
+      </section>
+
+      {/* FOOTER */}
+      <footer className="border-t border-blue-100 bg-white">
+
+        <div className="mx-auto flex max-w-6xl flex-col gap-6 px-5 py-7 sm:px-8 md:flex-row md:items-center md:justify-between">
+
+          <div className="flex items-center gap-4">
+
+            <Image
+              src="/images/mydnr-logo.png"
+              alt="MyDNR"
+              width={48}
+              height={48}
+              className="h-auto w-[38px]"
+            />
+
+            <p className="text-sm text-slate-500">
+              Secure DNR registration &amp; retrieval.
+            </p>
+
+          </div>
+
+          <nav className="flex flex-wrap gap-x-5 gap-y-3 text-sm text-slate-500">
+
+            <Link
+              href="/privacy"
+              className="hover:text-blue-700"
+            >
+              Privacy
+            </Link>
+
+            <Link
+              href="/terms"
+              className="hover:text-blue-700"
+            >
+              Terms
+            </Link>
+
+            <Link
+              href="/disclaimer"
+              className="hover:text-blue-700"
+            >
+              Disclaimer
+            </Link>
+
+            <Link
+              href="/contact"
+              className="hover:text-blue-700"
+            >
+              Contact
+            </Link>
+
+            <Link
+              href="/about"
+              className="hover:text-blue-700"
+            >
+              About
+            </Link>
+
+          </nav>
+
+        </div>
+      </footer>
+
     </main>
+  );
+}
+
+function PrivacyNotice({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50/60 p-5">
+
+      <div className="flex items-start gap-3">
+
+        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">
+          i
+        </div>
+
+        <p className="text-sm leading-6 text-slate-600">
+          <span className="font-bold text-slate-800">
+            Privacy notice:{" "}
+          </span>
+
+          {children}
+        </p>
+
+      </div>
+
+    </div>
+  );
+}
+
+function ReviewItem({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-2xl border border-blue-100 bg-white p-5 sm:p-6">
+
+      <div className="flex items-start gap-4">
+
+        <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700">
+          ✓
+        </div>
+
+        <div>
+          <h3 className="font-bold text-slate-900">
+            {title}
+          </h3>
+
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            {children}
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+  );
+}
+
+function Declaration({
+  checked,
+  disabled,
+  onChange,
+  children,
+}: {
+  checked: boolean;
+  disabled: boolean;
+  onChange: (checked: boolean) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <label
+      className={`block cursor-pointer rounded-2xl border p-5 transition sm:p-6 ${
+        checked
+          ? "border-blue-300 bg-blue-50/70"
+          : "border-blue-100 bg-[#fbfdff] hover:border-blue-200"
+      }`}
+    >
+      <div className="flex items-start gap-4">
+
+        <input
+          type="checkbox"
+          checked={checked}
+          disabled={disabled}
+          onChange={(event) =>
+            onChange(event.target.checked)
+          }
+          className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer accent-blue-600 disabled:cursor-not-allowed"
+        />
+
+        <p className="font-medium leading-7 text-slate-700">
+          {children}
+        </p>
+
+      </div>
+    </label>
+  );
+}
+
+function BackButton({
+  label,
+  onClick,
+  disabled = false,
+}: {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="mt-5">
+
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={disabled}
+        className="w-full rounded-xl border border-blue-200 bg-white py-3.5 text-sm font-semibold text-blue-700 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        ← {label}
+      </button>
+
+    </div>
+  );
+}
+
+function CompletionItem({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-xl bg-blue-50 px-4 py-4 text-center">
+
+      <div className="text-blue-600">
+        ✓
+      </div>
+
+      <p className="mt-1 text-sm font-semibold text-slate-800">
+        {children}
+      </p>
+
+    </div>
+  );
+}
+
+function ReassuranceItem({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="text-center">
+
+      <div className="text-lg text-blue-600">
+        ✓
+      </div>
+
+      <p className="mt-1 text-sm font-semibold text-slate-900">
+        {children}
+      </p>
+
+    </div>
   );
 }

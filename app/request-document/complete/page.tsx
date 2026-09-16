@@ -196,7 +196,6 @@ export default function DocumentRequestCompletePage() {
       setMessage(
         "Your payment is still being confirmed."
       );
-
     } catch (error) {
       console.error(
         "MANUAL DOCUMENT PAYMENT STATUS ERROR:",
@@ -207,7 +206,6 @@ export default function DocumentRequestCompletePage() {
       setMessage(
         "We could not confirm your payment at this time."
       );
-
     } finally {
       setManualChecking(false);
     }
@@ -221,8 +219,10 @@ export default function DocumentRequestCompletePage() {
       return;
     }
 
-    // Open the tab immediately while the browser still
-    // considers this a direct user action.
+    /*
+     * Open the tab immediately while the browser
+     * still considers this a direct user action.
+     */
     const documentWindow = window.open(
       "",
       "_blank"
@@ -246,7 +246,7 @@ export default function DocumentRequestCompletePage() {
           <body style="
             margin: 0;
             font-family: Arial, sans-serif;
-            background: #ffffff;
+            background: #f5f9fd;
             color: #0f172a;
             display: flex;
             align-items: center;
@@ -254,9 +254,40 @@ export default function DocumentRequestCompletePage() {
             min-height: 100vh;
             text-align: center;
           ">
-            <div>
-              <h2>Preparing your secure DNR document...</h2>
-              <p>Please wait a moment.</p>
+            <div style="
+              max-width: 520px;
+              padding: 32px;
+            ">
+              <div style="
+                width: 64px;
+                height: 64px;
+                margin: 0 auto 24px;
+                border-radius: 50%;
+                background: #dbeafe;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #2563eb;
+                font-size: 28px;
+                font-weight: bold;
+              ">
+                ↓
+              </div>
+
+              <h2 style="
+                margin-bottom: 12px;
+                font-size: 24px;
+              ">
+                Preparing your secure DNR document...
+              </h2>
+
+              <p style="
+                color: #64748b;
+                line-height: 1.6;
+              ">
+                Please wait a moment while MyDNR prepares
+                your temporary secure document link.
+              </p>
             </div>
           </body>
         </html>
@@ -301,259 +332,582 @@ export default function DocumentRequestCompletePage() {
         error?.message ||
           "Unable to retrieve the DNR document."
       );
-
     } finally {
       setDownloading(false);
     }
   };
 
+  /* =====================================================
+     PAYMENT CHECKING / PENDING / ERROR
+  ===================================================== */
+
   if (paymentState !== "paid") {
     return (
-      <main className="min-h-screen bg-white">
-        <div className="max-w-3xl mx-auto px-6 py-12">
+      <main className="min-h-screen bg-[#f5f9fd] text-slate-950">
 
-          {/* Logo */}
-          <div className="flex justify-center mb-6">
-            <Image
-              src="/images/mydnr-logo.png"
-              alt="MyDNR South Africa"
-              width={330}
-              height={330}
-              style={{
-                width: "auto",
-                height: "auto",
-              }}
-              priority
-            />
+        {/* HEADER */}
+        <header className="border-b border-blue-100 bg-white">
+          <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 sm:px-8">
+
+            <Link
+              href="/"
+              aria-label="Back to MyDNR home"
+            >
+              <Image
+                src="/images/mydnr-logo.png"
+                alt="MyDNR South Africa"
+                width={72}
+                height={72}
+                className="h-auto w-[54px] sm:w-[62px]"
+                priority
+              />
+            </Link>
+
+            <Link
+              href="/"
+              className="rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-sm font-semibold text-blue-700 transition hover:bg-blue-50"
+            >
+              Back to MyDNR
+            </Link>
+
           </div>
+        </header>
 
-          <div className="text-center mb-10">
+        {/* PAGE INTRO */}
+        <section className="border-b border-blue-100 bg-[#eef6fd]">
+          <div className="mx-auto max-w-4xl px-5 py-10 text-center sm:px-8 sm:py-14">
 
-            {/* Active Spinner */}
-            {paymentState === "checking" && (
-              <div className="flex justify-center mb-6">
-                <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center">
-                  <div className="w-8 h-8 border-4 border-slate-300 border-t-slate-900 rounded-full animate-spin" />
-                </div>
-              </div>
-            )}
+            <p className="mb-3 text-xs font-bold uppercase tracking-[0.28em] text-blue-600">
+              Secure Document Retrieval
+            </p>
 
-            {/* Pending / Error Icon */}
-            {paymentState !== "checking" && (
-              <div className="flex justify-center mb-6">
-                <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center">
-                  <span className="text-4xl text-slate-700">
-                    …
-                  </span>
-                </div>
-              </div>
-            )}
-
-            <h1 className="text-4xl font-bold text-slate-900 mb-4">
-              Confirming Payment
+            <h1 className="text-3xl font-bold leading-tight text-slate-950 sm:text-4xl">
+              Confirming Your Payment
             </h1>
 
-            <p className="text-slate-600">
+            <p className="mx-auto mt-4 max-w-xl text-base leading-7 text-slate-600 sm:text-lg">
               {message}
             </p>
 
           </div>
+        </section>
 
-          <div className="bg-slate-50 rounded-3xl p-8 mb-8 text-center">
+        {/* MAIN CONTENT */}
+        <section className="mx-auto max-w-3xl px-5 py-8 sm:px-8 sm:py-10">
 
-            {paymentState === "checking" && (
-              <p className="text-slate-600 leading-relaxed">
-                Please wait while MyDNR confirms your
-                payment with PayFast. This normally only
-                takes a few moments.
-              </p>
-            )}
+          <div className="overflow-hidden rounded-[28px] border border-blue-100 bg-white shadow-[0_16px_45px_rgba(15,23,42,0.06)]">
 
-            {paymentState === "pending" && (
-              <>
-                <p className="text-slate-600 leading-relaxed mb-6">
-                  Your payment notification has not yet
-                  reached MyDNR. Please do not make another
-                  payment. If you completed the PayFast
-                  payment, you can check again below.
-                </p>
+            <div className="px-6 py-9 text-center sm:px-9 sm:py-11">
 
-                <button
-                  onClick={handleCheckAgain}
-                  disabled={manualChecking}
-                  className="inline-block bg-slate-900 text-white px-8 py-3 rounded-xl font-medium disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  {manualChecking
-                    ? "Checking Payment..."
-                    : "Check Payment Again"}
-                </button>
-              </>
-            )}
+              {/* CHECKING */}
+              {paymentState === "checking" && (
+                <>
+                  <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-blue-50">
+                    <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" />
+                  </div>
 
-            {paymentState === "error" && (
-              <>
-                <p className="text-slate-600 leading-relaxed mb-6">
-                  We were unable to confirm your payment at
-                  this time. If you completed the PayFast
-                  payment, please do not make another payment.
-                  You can try checking again below.
-                </p>
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-600">
+                    Payment Confirmation
+                  </p>
 
-                <button
-                  onClick={handleCheckAgain}
-                  disabled={manualChecking}
-                  className="inline-block bg-slate-900 text-white px-8 py-3 rounded-xl font-medium disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  {manualChecking
-                    ? "Checking Payment..."
-                    : "Check Payment Again"}
-                </button>
-              </>
-            )}
+                  <h2 className="mt-3 text-2xl font-bold text-slate-950">
+                    Just a moment
+                  </h2>
 
+                  <p className="mx-auto mt-4 max-w-xl leading-7 text-slate-600">
+                    Please wait while MyDNR confirms your
+                    R100 document retrieval payment with
+                    PayFast. This normally only takes a few
+                    moments.
+                  </p>
+
+                  <div className="mx-auto mt-7 max-w-xl rounded-2xl border border-blue-100 bg-blue-50/60 p-5">
+                    <p className="text-sm leading-6 text-slate-600">
+                      Please do not refresh or close this page
+                      while payment confirmation is in progress.
+                    </p>
+                  </div>
+                </>
+              )}
+
+              {/* PENDING */}
+              {paymentState === "pending" && (
+                <>
+                  <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-blue-50">
+                    <span className="text-3xl font-bold text-blue-600">
+                      i
+                    </span>
+                  </div>
+
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-600">
+                    Confirmation Pending
+                  </p>
+
+                  <h2 className="mt-3 text-2xl font-bold text-slate-950">
+                    Payment Confirmation Is Taking Longer Than Expected
+                  </h2>
+
+                  <p className="mx-auto mt-4 max-w-xl leading-7 text-slate-600">
+                    Your payment notification has not yet
+                    reached MyDNR.
+                  </p>
+
+                  <div className="mx-auto mt-6 max-w-xl rounded-2xl border border-blue-100 bg-blue-50/70 p-5 sm:p-6">
+
+                    <p className="font-bold text-slate-900">
+                      Please do not make another payment.
+                    </p>
+
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      If you completed your payment with
+                      PayFast, it may simply still be
+                      processing. You can safely check the
+                      payment status again below.
+                    </p>
+
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleCheckAgain}
+                    disabled={manualChecking}
+                    className="mt-7 w-full rounded-xl bg-blue-600 px-8 py-4 font-bold text-white shadow-md transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                  >
+                    {manualChecking
+                      ? "Checking Payment..."
+                      : "Check Payment Again"}
+                  </button>
+                </>
+              )}
+
+              {/* ERROR */}
+              {paymentState === "error" && (
+                <>
+                  <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-blue-50">
+                    <span className="text-3xl font-bold text-blue-600">
+                      i
+                    </span>
+                  </div>
+
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-600">
+                    Confirmation Unavailable
+                  </p>
+
+                  <h2 className="mt-3 text-2xl font-bold text-slate-950">
+                    We Couldn&apos;t Confirm Your Payment Yet
+                  </h2>
+
+                  <p className="mx-auto mt-4 max-w-xl leading-7 text-slate-600">
+                    MyDNR was unable to confirm your payment
+                    at this time.
+                  </p>
+
+                  <div className="mx-auto mt-6 max-w-xl rounded-2xl border border-blue-100 bg-blue-50/70 p-5 sm:p-6">
+
+                    <p className="font-bold text-slate-900">
+                      If you have already paid, please do not
+                      make another payment.
+                    </p>
+
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      You can safely try checking the payment
+                      status again below.
+                    </p>
+
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleCheckAgain}
+                    disabled={manualChecking}
+                    className="mt-7 w-full rounded-xl bg-blue-600 px-8 py-4 font-bold text-white shadow-md transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                  >
+                    {manualChecking
+                      ? "Checking Payment..."
+                      : "Check Payment Again"}
+                  </button>
+                </>
+              )}
+
+            </div>
           </div>
 
-          {/* Do not show this while actively checking */}
           {paymentState !== "checking" && (
             <Link
               href="/"
-              className="block w-full border border-slate-300 text-slate-700 py-4 rounded-xl text-center font-medium"
+              className="mt-5 block w-full rounded-xl border border-blue-200 bg-white py-4 text-center font-semibold text-blue-700 transition hover:bg-blue-50"
             >
-              Return Home
+              Return to MyDNR Home
             </Link>
           )}
 
-        </div>
+        </section>
+
+        {/* REASSURANCE */}
+        <section className="mt-auto border-t border-blue-100 bg-[#eef6fd]">
+          <div className="mx-auto grid max-w-4xl gap-5 px-5 py-8 sm:grid-cols-3 sm:px-8">
+
+            <div className="text-center">
+              <div className="text-lg text-blue-600">
+                ✓
+              </div>
+              <p className="mt-1 text-sm font-semibold text-slate-900">
+                Secure payment
+              </p>
+            </div>
+
+            <div className="text-center">
+              <div className="text-lg text-blue-600">
+                ✓
+              </div>
+              <p className="mt-1 text-sm font-semibold text-slate-900">
+                Audit recorded
+              </p>
+            </div>
+
+            <div className="text-center">
+              <div className="text-lg text-blue-600">
+                ✓
+              </div>
+              <p className="mt-1 text-sm font-semibold text-slate-900">
+                Protected retrieval
+              </p>
+            </div>
+
+          </div>
+        </section>
+
       </main>
     );
   }
 
+  /* =====================================================
+     PAYMENT CONFIRMED / DOCUMENT READY
+  ===================================================== */
+
   return (
-    <main className="min-h-screen bg-white">
-      <div className="max-w-3xl mx-auto px-6 py-12">
+    <main className="min-h-screen bg-[#f5f9fd] text-slate-950">
 
-        {/* Logo */}
-        <div className="flex justify-center mb-6">
-          <Image
-            src="/images/mydnr-logo.png"
-            alt="MyDNR South Africa"
-            width={330}
-            height={330}
-            style={{
-              width: "auto",
-              height: "auto",
-            }}
-            priority
-          />
+      {/* HEADER */}
+      <header className="border-b border-blue-100 bg-white">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 sm:px-8">
+
+          <Link
+            href="/"
+            aria-label="Back to MyDNR home"
+          >
+            <Image
+              src="/images/mydnr-logo.png"
+              alt="MyDNR South Africa"
+              width={72}
+              height={72}
+              className="h-auto w-[54px] sm:w-[62px]"
+              priority
+            />
+          </Link>
+
+          <Link
+            href="/"
+            className="rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-sm font-semibold text-blue-700 transition hover:bg-blue-50"
+          >
+            Back to MyDNR
+          </Link>
+
         </div>
+      </header>
 
-        {/* Success Heading */}
-        <div className="text-center mb-10">
+      {/* SUCCESS INTRO */}
+      <section className="border-b border-blue-100 bg-[#eef6fd]">
+        <div className="mx-auto max-w-4xl px-5 py-10 text-center sm:px-8 sm:py-14">
 
-          <div className="flex justify-center mb-6">
-            <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center">
-              <span className="text-5xl text-green-700">
-                ✓
-              </span>
-            </div>
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-blue-600 text-3xl font-bold text-white shadow-md">
+            ✓
           </div>
 
-          <h1 className="text-4xl font-bold text-slate-900 mb-4">
+          <p className="mb-3 text-xs font-bold uppercase tracking-[0.28em] text-blue-600">
             Payment Confirmed
+          </p>
+
+          <h1 className="text-3xl font-bold leading-tight text-slate-950 sm:text-4xl">
+            Your DNR Document Is Ready
           </h1>
 
-          <p className="text-slate-600">
-            Your DNR document retrieval payment has been
-            successfully confirmed.
+          <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
+            Your R100 retrieval payment has been successfully
+            confirmed and secure access to the registered DNR
+            document is now available.
           </p>
 
         </div>
+      </section>
 
-        {/* Download Panel */}
-        <div className="bg-slate-50 rounded-3xl p-8 mb-8 text-center">
+      {/* MAIN CONTENT */}
+      <section className="mx-auto max-w-4xl px-5 py-8 sm:px-8 sm:py-10">
 
-          <h2 className="text-2xl font-semibold text-slate-800 mb-5">
-            Your DNR Document Is Ready
-          </h2>
+        <div className="overflow-hidden rounded-[28px] border border-blue-100 bg-white shadow-[0_16px_45px_rgba(15,23,42,0.06)]">
 
-          <p className="text-slate-600 leading-relaxed mb-6">
-            Payment has been confirmed and the registered
-            DNR document is ready for secure retrieval.
-          </p>
+          {/* DOCUMENT READY */}
+          <div className="border-b border-blue-100 bg-[#f8fbff] px-6 py-8 text-center sm:px-9 sm:py-9">
 
-          <button
-            onClick={handleDownload}
-            disabled={downloading}
-            className="w-full bg-slate-900 text-white py-4 rounded-xl font-medium disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            {downloading
-              ? "Preparing Secure Document..."
-              : "View Registered DNR Document"}
-          </button>
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-100 text-2xl font-bold text-blue-700">
+              ↓
+            </div>
 
-          <p className="text-sm text-slate-500 mt-4">
-            For your security, access to this document is temporary.
-            You may view or download a copy while the secure link is active.
-          </p>
+            <p className="mt-5 text-xs font-bold uppercase tracking-[0.22em] text-blue-600">
+              Secure Document Access
+            </p>
+
+            <h2 className="mt-2 text-2xl font-bold text-slate-950">
+              View the Registered DNR Document
+            </h2>
+
+            <p className="mx-auto mt-3 max-w-xl leading-7 text-slate-600">
+              Payment has been confirmed and the registered
+              DNR document is ready for secure retrieval.
+            </p>
+
+          </div>
+
+          <div className="space-y-8 px-6 py-8 sm:px-9 sm:py-10">
+
+            {/* DOWNLOAD */}
+            <div className="rounded-2xl border border-blue-200 bg-blue-50/60 p-6 text-center sm:p-8">
+
+              <p className="text-sm leading-6 text-slate-600">
+                When you continue, MyDNR will prepare a
+                temporary secure link to the registered
+                DNR document.
+              </p>
+
+              <button
+                type="button"
+                onClick={handleDownload}
+                disabled={downloading}
+                className="mt-6 w-full rounded-xl bg-blue-600 px-6 py-4 font-bold text-white shadow-md transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-200 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {downloading
+                  ? "Preparing Secure Document..."
+                  : "View Registered DNR Document"}
+              </button>
+
+              <div className="mt-5 flex items-start justify-center gap-2 text-left sm:text-center">
+
+                <span className="shrink-0 text-blue-600">
+                  ✓
+                </span>
+
+                <p className="text-xs leading-5 text-slate-500">
+                  For your security, access to this document
+                  is temporary. You may view or download a
+                  copy while the secure link is active.
+                </p>
+
+              </div>
+
+            </div>
+
+            {/* COMPLETED ITEMS */}
+            <div>
+
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-600">
+                Retrieval Status
+              </p>
+
+              <h3 className="mt-2 text-xl font-bold text-slate-950">
+                Your document request is ready.
+              </h3>
+
+              <div className="mt-6 space-y-4">
+
+                <StatusItem>
+                  Your payment has been successfully confirmed.
+                </StatusItem>
+
+                <StatusItem>
+                  Your document request has been recorded.
+                </StatusItem>
+
+                <StatusItem>
+                  The retrieval request is linked to the
+                  registered DNR record.
+                </StatusItem>
+
+                <StatusItem>
+                  Secure access to the registered DNR document
+                  is now available.
+                </StatusItem>
+
+              </div>
+
+            </div>
+
+            {/* SECURITY NOTICE */}
+            <div className="rounded-2xl border border-blue-100 bg-[#f8fbff] p-6 sm:p-7">
+
+              <div className="flex items-start gap-4">
+
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 font-bold text-blue-700">
+                  i
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-bold text-slate-950">
+                    Security Notice
+                  </h3>
+
+                  <p className="mt-3 text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">
+                    MyDNR records document retrieval requests
+                    for audit and security purposes. Only the
+                    registered DNR document is made available
+                    through this retrieval process.
+                    Identification documents are never provided
+                    through this service.
+                  </p>
+                </div>
+
+              </div>
+
+            </div>
+
+            {/* HOME */}
+            <div className="border-t border-blue-100 pt-7">
+
+              <Link
+                href="/"
+                className="block w-full rounded-xl border border-blue-200 bg-white py-4 text-center font-semibold text-blue-700 transition hover:bg-blue-50"
+              >
+                Return to MyDNR Home
+              </Link>
+
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* REASSURANCE */}
+      <section className="border-t border-blue-100 bg-[#eef6fd]">
+
+        <div className="mx-auto grid max-w-4xl gap-5 px-5 py-8 sm:grid-cols-3 sm:px-8">
+
+          <div className="text-center">
+            <div className="text-lg text-blue-600">
+              ✓
+            </div>
+
+            <p className="mt-1 text-sm font-semibold text-slate-900">
+              Temporary access
+            </p>
+          </div>
+
+          <div className="text-center">
+            <div className="text-lg text-blue-600">
+              ✓
+            </div>
+
+            <p className="mt-1 text-sm font-semibold text-slate-900">
+              Audit recorded
+            </p>
+          </div>
+
+          <div className="text-center">
+            <div className="text-lg text-blue-600">
+              ✓
+            </div>
+
+            <p className="mt-1 text-sm font-semibold text-slate-900">
+              DNR document only
+            </p>
+          </div>
 
         </div>
+      </section>
 
-        {/* Completed Items */}
-        <div className="bg-slate-50 rounded-3xl p-6 mb-8">
+      {/* FOOTER */}
+      <footer className="border-t border-blue-100 bg-white">
 
-          <h3 className="text-xl font-semibold text-slate-800 mb-4">
-            Your Document Request Is Ready
-          </h3>
+        <div className="mx-auto flex max-w-6xl flex-col gap-6 px-5 py-7 sm:px-8 md:flex-row md:items-center md:justify-between">
 
-          <ul className="space-y-3 text-slate-600">
+          <div className="flex items-center gap-4">
 
-            <li>
-              ✓ Your payment has been successfully confirmed.
-            </li>
+            <Image
+              src="/images/mydnr-logo.png"
+              alt="MyDNR"
+              width={48}
+              height={48}
+              className="h-auto w-[38px]"
+            />
 
-            <li>
-              ✓ Your document request has been recorded.
-            </li>
+            <p className="text-sm text-slate-500">
+              Secure DNR registration &amp; retrieval.
+            </p>
 
-            <li>
-              ✓ The retrieval request is linked to the
-              registered DNR record.
-            </li>
+          </div>
 
-            <li>
-              ✓ Secure access to the registered DNR document
-              is now available.
-            </li>
+          <nav className="flex flex-wrap gap-x-5 gap-y-3 text-sm text-slate-500">
 
-          </ul>
+            <Link
+              href="/privacy"
+              className="hover:text-blue-700"
+            >
+              Privacy
+            </Link>
+
+            <Link
+              href="/terms"
+              className="hover:text-blue-700"
+            >
+              Terms
+            </Link>
+
+            <Link
+              href="/disclaimer"
+              className="hover:text-blue-700"
+            >
+              Disclaimer
+            </Link>
+
+            <Link
+              href="/contact"
+              className="hover:text-blue-700"
+            >
+              Contact
+            </Link>
+
+            <Link
+              href="/about"
+              className="hover:text-blue-700"
+            >
+              About
+            </Link>
+
+          </nav>
 
         </div>
+      </footer>
 
-        {/* Security Notice */}
-        <div className="bg-slate-50 rounded-3xl p-6 mb-8">
-
-          <h3 className="text-xl font-semibold text-slate-800 mb-3">
-            Security Notice
-          </h3>
-
-          <p className="text-slate-600 leading-relaxed">
-            MyDNR records document retrieval requests for
-            audit and security purposes. Only the registered
-            DNR document is made available through this
-            retrieval process. Identification documents are
-            never provided through this service.
-          </p>
-
-        </div>
-
-        <Link
-          href="/"
-          className="block w-full bg-slate-900 text-white py-4 rounded-xl text-center font-medium"
-        >
-          Return Home
-        </Link>
-
-      </div>
     </main>
+  );
+}
+
+function StatusItem({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-start gap-4">
+
+      <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600">
+        <span className="text-sm font-bold text-white">
+          ✓
+        </span>
+      </div>
+
+      <p className="leading-7 text-slate-600">
+        {children}
+      </p>
+
+    </div>
   );
 }

@@ -74,184 +74,377 @@ export default function ConsentPage() {
     router.push("/register/payment");
   };
 
+  const consentItems = [
+    {
+      checked: consent1,
+      setChecked: setConsent1,
+      text:
+        "I confirm that the information provided during this registration process is accurate and complete to the best of my knowledge.",
+    },
+    {
+      checked: consent2,
+      setChecked: setConsent2,
+      text:
+        "I confirm that the uploaded DNR document represents my wishes and has been signed accordingly.",
+    },
+    {
+      checked: consent3,
+      setChecked: setConsent3,
+      text:
+        "I understand that MyDNR stores the uploaded documentation for the purpose of registration, verification and retrieval of DNR records.",
+    },
+    {
+      checked: consent4,
+      setChecked: setConsent4,
+      text:
+        "I consent to the collection, storage and processing of personal information for the operation of this service in accordance with applicable South African privacy legislation, including POPIA.",
+    },
+    {
+      checked: consent5,
+      setChecked: setConsent5,
+      text:
+        "I understand that someone who knows my South African ID Number may check whether I have a DNR record registered with MyDNR and may request access to my registered DNR document through the MyDNR retrieval process.",
+    },
+  ];
+
   return (
-    <main className="min-h-screen bg-white">
-      <div className="max-w-3xl mx-auto px-6 py-16">
+    <main className="min-h-screen bg-[#f5f9fd] text-slate-950">
 
-        {/* Logo */}
-        <div className="flex justify-center mb-6">
-          <Image
-            src="/images/mydnr-logo.png"
-            alt="MyDNR South Africa"
-            width={330}
-            height={330}
-            style={{
-              width: "auto",
-              height: "auto",
-            }}
-            priority
-          />
+      {/* HEADER */}
+      <header className="border-b border-blue-100 bg-white">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 sm:px-8">
+          <Link href="/" aria-label="Back to MyDNR home">
+            <Image
+              src="/images/mydnr-logo.png"
+              alt="MyDNR South Africa"
+              width={72}
+              height={72}
+              className="h-auto w-[54px] sm:w-[62px]"
+              priority
+            />
+          </Link>
+
+          <Link
+            href="/"
+            className="rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-sm font-semibold text-blue-700 transition hover:bg-blue-50"
+          >
+            Back to MyDNR
+          </Link>
         </div>
+      </header>
 
-        {/* Page Heading */}
-        <div className="text-center mb-10">
-          <h1 className="text-4xl font-bold text-slate-900 mb-4">
+      {/* PAGE INTRO */}
+      <section className="border-b border-blue-100 bg-[#eef6fd]">
+        <div className="mx-auto max-w-4xl px-5 py-10 sm:px-8 sm:py-14">
+          <p className="mb-3 text-xs font-bold uppercase tracking-[0.28em] text-blue-600">
+            Secure Registration
+          </p>
+
+          <h1 className="max-w-3xl text-3xl font-bold leading-tight text-slate-950 sm:text-4xl">
             Register Your DNR Request
           </h1>
 
-          <p className="text-slate-600">
-            Step 3 of 4
+          <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
+            Review and acknowledge the statements required before
+            completing your registration.
           </p>
         </div>
+      </section>
 
-        {/* Progress Bar */}
-        <div className="mb-12">
-          <div className="w-full bg-slate-200 rounded-full h-3">
-            <div className="bg-slate-900 h-3 rounded-full w-3/4"></div>
+      {/* PROGRESS */}
+      <section className="mx-auto max-w-4xl px-5 pt-8 sm:px-8 sm:pt-10">
+        <div className="rounded-2xl border border-blue-100 bg-white p-5 shadow-sm sm:p-6">
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-blue-600">
+                Registration Journey
+              </p>
+
+              <p className="mt-1 text-sm font-semibold text-slate-900">
+                Step 3 of 4 — Consent &amp; acknowledgement
+              </p>
+            </div>
+
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">
+              3
+            </div>
+          </div>
+
+          <div className="h-2 overflow-hidden rounded-full bg-blue-50">
+            <div className="h-full w-3/4 rounded-full bg-blue-600" />
           </div>
         </div>
+      </section>
 
-        {/* Information Panel */}
-        <div className="bg-slate-50 rounded-3xl p-8 mb-10 text-center">
-          <h2 className="text-2xl font-semibold text-slate-800 mb-4">
-            Consent & Acknowledgement
-          </h2>
+      {/* MAIN CONTENT */}
+      <section className="mx-auto max-w-4xl px-5 py-8 sm:px-8 sm:py-10">
+        <div className="overflow-hidden rounded-[28px] border border-blue-100 bg-white shadow-[0_16px_45px_rgba(15,23,42,0.06)]">
 
-          <p className="text-slate-600 leading-relaxed">
-            Before completing your registration, please review
-            and acknowledge the statements below.
-          </p>
+          {/* INTRO */}
+          <div className="border-b border-blue-100 bg-[#f8fbff] px-6 py-7 sm:px-9 sm:py-8">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-xl font-bold text-blue-700">
+                ✓
+              </div>
+
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.22em] text-blue-600">
+                  Your Consent
+                </p>
+
+                <h2 className="mt-2 text-2xl font-bold text-slate-950">
+                  Consent &amp; Acknowledgement
+                </h2>
+
+                <p className="mt-3 max-w-2xl leading-7 text-slate-600">
+                  Please read each statement carefully. All five
+                  acknowledgements must be accepted before you can
+                  continue to payment.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-8 px-6 py-8 sm:px-9 sm:py-10">
+
+            {/* CONSENT STATEMENTS */}
+            <div>
+              <div className="mb-5 flex items-center justify-between gap-4">
+                <h3 className="text-lg font-bold text-slate-950">
+                  Please confirm each statement
+                </h3>
+
+                <span className="shrink-0 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+                  5 required
+                </span>
+              </div>
+
+              <div className="space-y-4">
+                {consentItems.map((item, index) => (
+                  <label
+                    key={index}
+                    className={`flex cursor-pointer items-start gap-4 rounded-2xl border p-5 transition ${
+                      item.checked
+                        ? "border-blue-300 bg-blue-50/70"
+                        : "border-blue-100 bg-[#fbfdff] hover:border-blue-200"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={item.checked}
+                      onChange={(e) =>
+                        item.setChecked(e.target.checked)
+                      }
+                      className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer accent-blue-600"
+                    />
+
+                    <div className="flex-1">
+                      <p className="mb-1 text-xs font-bold uppercase tracking-[0.16em] text-blue-600">
+                        Acknowledgement {index + 1}
+                      </p>
+
+                      <span className="text-sm leading-6 text-slate-700 sm:text-base sm:leading-7">
+                        {item.text}
+                      </span>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* COMPLETION STATUS */}
+            <div
+              className={`rounded-2xl border p-5 ${
+                allChecked
+                  ? "border-emerald-200 bg-emerald-50"
+                  : "border-blue-100 bg-[#f8fbff]"
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <div
+                  className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                    allChecked
+                      ? "bg-emerald-600 text-white"
+                      : "bg-blue-100 text-blue-700"
+                  }`}
+                >
+                  {allChecked ? "✓" : "i"}
+                </div>
+
+                <div>
+                  <p
+                    className={`font-semibold ${
+                      allChecked
+                        ? "text-emerald-800"
+                        : "text-slate-900"
+                    }`}
+                  >
+                    {allChecked
+                      ? "All acknowledgements accepted"
+                      : "All five acknowledgements are required"}
+                  </p>
+
+                  <p
+                    className={`mt-1 text-sm leading-6 ${
+                      allChecked
+                        ? "text-emerald-700"
+                        : "text-slate-600"
+                    }`}
+                  >
+                    {allChecked
+                      ? "You can now continue to the payment step."
+                      : "Please review and tick each statement above before continuing."}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* IMPORTANT NOTICE */}
+            <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-6 sm:p-7">
+              <div className="flex items-start gap-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 font-bold text-amber-700">
+                  !
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-bold text-slate-950">
+                    Important Notice
+                  </h3>
+
+                  <p className="mt-3 text-sm leading-6 text-slate-700 sm:text-base sm:leading-7">
+                    MyDNR acts as a secure document registration and
+                    retrieval service. Registration of a DNR document
+                    does not constitute medical advice, legal advice or
+                    validation of the document&apos;s contents.
+                  </p>
+
+                  <p className="mt-3 text-sm leading-6 text-slate-700 sm:text-base sm:leading-7">
+                    We encourage you to discuss your DNR wishes with
+                    your healthcare practitioner and the people close
+                    to you, so they understand your wishes should the
+                    document ever be needed.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* PRIVACY LINK */}
+            <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-5">
+              <p className="text-sm leading-6 text-slate-600">
+                You can read more about how MyDNR handles personal
+                information in our{" "}
+                <Link
+                  href="/privacy"
+                  className="font-semibold text-blue-700 underline decoration-blue-200 underline-offset-4 hover:text-blue-800"
+                >
+                  Privacy Notice
+                </Link>
+                .
+              </p>
+            </div>
+
+            {/* NAVIGATION */}
+            <div className="border-t border-blue-100 pt-7">
+              <div className="flex flex-col-reverse gap-3 sm:flex-row">
+                <Link
+                  href="/register/documents"
+                  className="rounded-xl border border-blue-200 bg-white px-6 py-4 text-center font-semibold text-blue-700 transition hover:bg-blue-50 sm:w-1/3"
+                >
+                  Back
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={handleContinue}
+                  disabled={!allChecked}
+                  className={`rounded-xl px-6 py-4 text-center font-bold text-white shadow-md transition sm:w-2/3 ${
+                    allChecked
+                      ? "bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-200"
+                      : "cursor-not-allowed bg-slate-300 shadow-none"
+                  }`}
+                >
+                  Continue to Payment
+                </button>
+              </div>
+
+              <div className="mt-5 flex items-center justify-center gap-2 text-center text-xs leading-5 text-slate-500">
+                <span className="text-blue-600">✓</span>
+                <span>
+                  Your consent acceptance and date will be recorded
+                  as part of your registration.
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
+      </section>
 
-        {/* Consent Statements */}
-        <div className="space-y-6 mb-10">
+      {/* REASSURANCE */}
+      <section className="border-t border-blue-100 bg-[#eef6fd]">
+        <div className="mx-auto grid max-w-4xl gap-5 px-5 py-8 sm:grid-cols-3 sm:px-8">
+          <div className="text-center">
+            <div className="text-lg text-blue-600">✓</div>
+            <p className="mt-1 text-sm font-semibold text-slate-900">
+              Clear consent
+            </p>
+          </div>
 
-          <label className="flex items-start gap-4">
-            <input
-              type="checkbox"
-              checked={consent1}
-              onChange={(e) => setConsent1(e.target.checked)}
-              className="mt-1 h-5 w-5 shrink-0"
-            />
+          <div className="text-center">
+            <div className="text-lg text-blue-600">✓</div>
+            <p className="mt-1 text-sm font-semibold text-slate-900">
+              POPIA-conscious
+            </p>
+          </div>
 
-            <span className="text-slate-700">
-              I confirm that the information provided during this
-              registration process is accurate and complete to the
-              best of my knowledge.
-            </span>
-          </label>
-
-          <label className="flex items-start gap-4">
-            <input
-              type="checkbox"
-              checked={consent2}
-              onChange={(e) => setConsent2(e.target.checked)}
-              className="mt-1 h-5 w-5 shrink-0"
-            />
-
-            <span className="text-slate-700">
-              I confirm that the uploaded DNR document represents
-              my wishes and has been signed accordingly.
-            </span>
-          </label>
-
-          <label className="flex items-start gap-4">
-            <input
-              type="checkbox"
-              checked={consent3}
-              onChange={(e) => setConsent3(e.target.checked)}
-              className="mt-1 h-5 w-5 shrink-0"
-            />
-
-            <span className="text-slate-700">
-              I understand that MyDNR stores the uploaded
-              documentation for the purpose of registration,
-              verification and retrieval of DNR records.
-            </span>
-          </label>
-
-          <label className="flex items-start gap-4">
-            <input
-              type="checkbox"
-              checked={consent4}
-              onChange={(e) => setConsent4(e.target.checked)}
-              className="mt-1 h-5 w-5 shrink-0"
-            />
-
-            <span className="text-slate-700">
-              I consent to the collection, storage and processing
-              of personal information for the operation of this
-              service in accordance with applicable South African
-              privacy legislation, including POPIA.
-            </span>
-          </label>
-
-          <label className="flex items-start gap-4">
-            <input
-              type="checkbox"
-              checked={consent5}
-              onChange={(e) => setConsent5(e.target.checked)}
-              className="mt-1 h-5 w-5 shrink-0"
-            />
-
-            <span className="text-slate-700">
-              I understand that someone who knows my South African
-              ID Number may check whether I have a DNR record
-              registered with MyDNR and may request access to my
-              registered DNR document through the MyDNR retrieval
-              process.
-            </span>
-          </label>
-
+          <div className="text-center">
+            <div className="text-lg text-blue-600">✓</div>
+            <p className="mt-1 text-sm font-semibold text-slate-900">
+              South African service
+            </p>
+          </div>
         </div>
+      </section>
 
-        {/* Important Notice */}
-        <div className="bg-slate-50 rounded-3xl p-8 mb-10">
+      {/* FOOTER */}
+      <footer className="border-t border-blue-100 bg-white">
+        <div className="mx-auto flex max-w-6xl flex-col gap-6 px-5 py-7 sm:px-8 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-4">
+            <Image
+              src="/images/mydnr-logo.png"
+              alt="MyDNR"
+              width={48}
+              height={48}
+              className="h-auto w-[38px]"
+            />
 
-          <h3 className="text-xl font-semibold text-slate-800 mb-4">
-            Important Notice
-          </h3>
+            <p className="text-sm text-slate-500">
+              Secure DNR registration &amp; retrieval.
+            </p>
+          </div>
 
-          <p className="text-slate-600 leading-relaxed">
-            MyDNR acts as a secure document registration and retrieval
-            service. Registration of a DNR document does not constitute
-            medical advice, legal advice or validation of the document&apos;s
-            contents.
-          </p>
+          <nav className="flex flex-wrap gap-x-5 gap-y-3 text-sm text-slate-500">
+            <Link href="/privacy" className="hover:text-blue-700">
+              Privacy
+            </Link>
 
-          <p className="text-slate-600 leading-relaxed mt-4">
-            We encourage you to discuss your DNR wishes with your
-            healthcare practitioner and the people close to you, so they
-            understand your wishes should the document ever be needed.
-          </p>
+            <Link href="/terms" className="hover:text-blue-700">
+              Terms
+            </Link>
 
+            <Link href="/disclaimer" className="hover:text-blue-700">
+              Disclaimer
+            </Link>
+
+            <Link href="/contact" className="hover:text-blue-700">
+              Contact
+            </Link>
+
+            <Link href="/about" className="hover:text-blue-700">
+              About
+            </Link>
+          </nav>
         </div>
-
-        {/* Navigation Buttons */}
-        <div className="flex gap-4">
-
-          <Link
-            href="/register/documents"
-            className="w-1/3 border border-slate-300 text-slate-700 py-4 rounded-xl text-center"
-          >
-            Back
-          </Link>
-
-          <button
-            onClick={handleContinue}
-            disabled={!allChecked}
-            className={`w-2/3 py-4 rounded-xl text-center text-white ${
-              allChecked
-                ? "bg-slate-900"
-                : "bg-slate-400 cursor-not-allowed"
-            }`}
-          >
-            Continue to Payment
-          </button>
-
-        </div>
-
-      </div>
+      </footer>
     </main>
   );
 }
