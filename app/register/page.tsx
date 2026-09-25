@@ -1,15 +1,26 @@
+
 "use client";
 
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import PhoneInput from "react-phone-number-input";
+import "react-phone-number-input/style.css";
+import { COUNTRIES } from "@/lib/countries";
+
+type IdentificationType = "SA_ID" | "PASSPORT";
 
 export default function RegisterPage() {
   const router = useRouter();
 
   const [fullName, setFullName] = useState("");
+  const [identificationType, setIdentificationType] =
+    useState<IdentificationType>("SA_ID");
   const [saIdNumber, setSaIdNumber] = useState("");
+  const [passportNumber, setPassportNumber] = useState("");
+  const [passportCountry, setPassportCountry] = useState("");
+  const [passportDateOfBirth, setPassportDateOfBirth] = useState("");
   const [email, setEmail] = useState("");
   const [mobileNumber, setMobileNumber] = useState("");
   const [nextOfKinName, setNextOfKinName] = useState("");
@@ -58,9 +69,22 @@ export default function RegisterPage() {
     return `${fullYear}-${month}-${day}`;
   };
 
+  const handleIdentificationTypeChange = (
+    type: IdentificationType
+  ) => {
+    setIdentificationType(type);
+
+    if (type === "SA_ID") {
+      setPassportNumber("");
+      setPassportCountry("");
+      setPassportDateOfBirth("");
+    } else {
+      setSaIdNumber("");
+    }
+  };
+
   const handleContinue = () => {
     const cleanedName = fullName.trim();
-    const cleanedId = saIdNumber.trim();
     const cleanedEmail = email.trim().toLowerCase();
     const cleanedMobile = mobileNumber.trim();
 
@@ -69,23 +93,66 @@ export default function RegisterPage() {
       return;
     }
 
-    if (!cleanedId) {
-      alert("Please enter your South African ID Number.");
-      return;
-    }
+    let dateOfBirth = "";
+    let cleanedId = "";
+    let cleanedPassportNumber = "";
+    let cleanedPassportCountry = "";
 
-    if (!/^\d{13}$/.test(cleanedId)) {
-      alert("Please enter a valid 13-digit South African ID Number.");
-      return;
-    }
+    if (identificationType === "SA_ID") {
+      cleanedId = saIdNumber.trim();
 
-    const dateOfBirth = deriveDateOfBirth(cleanedId);
+      if (!cleanedId) {
+        alert("Please enter your South African ID Number.");
+        return;
+      }
 
-    if (!dateOfBirth) {
-      alert(
-        "The date contained in this South African ID Number does not appear to be valid."
+      if (!/^\d{13}$/.test(cleanedId)) {
+        alert("Please enter a valid 13-digit South African ID Number.");
+        return;
+      }
+
+      const derivedDateOfBirth = deriveDateOfBirth(cleanedId);
+
+      if (!derivedDateOfBirth) {
+        alert(
+          "The date contained in this South African ID Number does not appear to be valid."
+        );
+        return;
+      }
+
+      dateOfBirth = derivedDateOfBirth;
+    } else {
+      cleanedPassportNumber = passportNumber.trim().toUpperCase();
+      cleanedPassportCountry = passportCountry.trim();
+
+      if (!cleanedPassportNumber) {
+        alert("Please enter your Passport Number.");
+        return;
+      }
+
+      if (!cleanedPassportCountry) {
+        alert("Please enter the Country of Issue for your passport.");
+        return;
+      }
+
+      if (!passportDateOfBirth) {
+        alert("Please enter your Date of Birth.");
+        return;
+      }
+
+      const enteredDateOfBirth = new Date(
+        `${passportDateOfBirth}T00:00:00`
       );
-      return;
+
+      if (
+        Number.isNaN(enteredDateOfBirth.getTime()) ||
+        enteredDateOfBirth > new Date()
+      ) {
+        alert("Please enter a valid Date of Birth.");
+        return;
+      }
+
+      dateOfBirth = passportDateOfBirth;
     }
 
     if (!cleanedEmail) {
@@ -107,7 +174,17 @@ export default function RegisterPage() {
 
     const registrationData = {
       fullName: cleanedName,
-      saIdNumber: cleanedId,
+      identificationType,
+      saIdNumber:
+        identificationType === "SA_ID" ? cleanedId : null,
+      passportNumber:
+        identificationType === "PASSPORT"
+          ? cleanedPassportNumber
+          : null,
+      passportCountry:
+        identificationType === "PASSPORT"
+          ? cleanedPassportCountry
+          : null,
       dateOfBirth,
       email: cleanedEmail,
       mobileNumber: cleanedMobile,
@@ -252,30 +329,146 @@ export default function RegisterPage() {
                   />
                 </div>
 
+                {/* IDENTIFICATION TYPE */}
                 <div>
-                  <label htmlFor="saIdNumber" className={labelClass}>
-                    South African ID Number
-                  </label>
+                  <span className={labelClass}>
+                    Identification Type
+                  </span>
 
-                  <input
-                    id="saIdNumber"
-                    type="text"
-                    value={saIdNumber}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/\D/g, "");
-                      setSaIdNumber(value.slice(0, 13));
-                    }}
-                    maxLength={13}
-                    inputMode="numeric"
-                    autoComplete="off"
-                    required
-                    className={inputClass}
-                  />
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleIdentificationTypeChange("SA_ID")
+                      }
+                      className={`rounded-xl border px-4 py-3.5 text-sm font-semibold transition ${
+                        identificationType === "SA_ID"
+                          ? "border-blue-600 bg-blue-50 text-blue-700 ring-2 ring-blue-100"
+                          : "border-blue-100 bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50/40"
+                      }`}
+                    >
+                      South African ID Number
+                    </button>
 
-                  <p className="mt-2 text-sm leading-6 text-slate-500">
-                    Enter your 13-digit South African ID Number.
-                  </p>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleIdentificationTypeChange("PASSPORT")
+                      }
+                      className={`rounded-xl border px-4 py-3.5 text-sm font-semibold transition ${
+                        identificationType === "PASSPORT"
+                          ? "border-blue-600 bg-blue-50 text-blue-700 ring-2 ring-blue-100"
+                          : "border-blue-100 bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50/40"
+                      }`}
+                    >
+                      Passport
+                    </button>
+                  </div>
                 </div>
+
+                {identificationType === "SA_ID" && (
+                  <div>
+                    <label
+                      htmlFor="saIdNumber"
+                      className={labelClass}
+                    >
+                      South African ID Number
+                    </label>
+
+                    <input
+                      id="saIdNumber"
+                      type="text"
+                      value={saIdNumber}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, "");
+                        setSaIdNumber(value.slice(0, 13));
+                      }}
+                      maxLength={13}
+                      inputMode="numeric"
+                      autoComplete="off"
+                      required
+                      className={inputClass}
+                    />
+
+                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                      Enter your 13-digit South African ID Number.
+                    </p>
+                  </div>
+                )}
+
+                {identificationType === "PASSPORT" && (
+                  <>
+                    <div>
+                      <label
+                        htmlFor="passportNumber"
+                        className={labelClass}
+                      >
+                        Passport Number
+                      </label>
+
+                      <input
+                        id="passportNumber"
+                        type="text"
+                        value={passportNumber}
+                        onChange={(e) =>
+                          setPassportNumber(
+                            e.target.value.toUpperCase()
+                          )
+                        }
+                        autoComplete="off"
+                        className={inputClass}
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="passportCountry"
+                        className={labelClass}
+                      >
+                        Country of Issue
+                      </label>
+
+                      <select
+                        id="passportCountry"
+                        value={passportCountry}
+                        onChange={(e) =>
+                          setPassportCountry(e.target.value)
+                        }
+                        className={inputClass}
+                      >
+                        <option value="">Select country of issue</option>
+
+                        {COUNTRIES.map((country) => (
+                          <option key={country} value={country}>
+                            {country}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="passportDateOfBirth"
+                        className={labelClass}
+                      >
+                        Date of Birth
+                      </label>
+
+                      <input
+                        id="passportDateOfBirth"
+                        type="date"
+                        value={passportDateOfBirth}
+                        onChange={(e) =>
+                          setPassportDateOfBirth(e.target.value)
+                        }
+                        max={
+                          new Date().toISOString().split("T")[0]
+                        }
+                        className={inputClass}
+                      />
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
@@ -309,14 +502,16 @@ export default function RegisterPage() {
                     Mobile Number
                   </label>
 
-                  <input
+                 <PhoneInput
                     id="mobileNumber"
-                    type="tel"
-                    value={mobileNumber}
-                    onChange={(e) => setMobileNumber(e.target.value)}
-                    autoComplete="tel"
-                    required
-                    className={inputClass}
+                    defaultCountry="ZA"
+                    value={mobileNumber || undefined}
+                    onChange={(value) => setMobileNumber(value || "")}
+                    className="flex items-center gap-3"
+                    numberInputProps={{
+                      className: inputClass,
+                      autoComplete: "tel",
+                    }}
                   />
                 </div>
               </div>
@@ -345,7 +540,10 @@ export default function RegisterPage() {
 
               <div className="grid gap-6 sm:grid-cols-2">
                 <div>
-                  <label htmlFor="nextOfKinName" className={labelClass}>
+                  <label
+                    htmlFor="nextOfKinName"
+                    className={labelClass}
+                  >
                     Next of Kin Name
                   </label>
 
@@ -353,32 +551,40 @@ export default function RegisterPage() {
                     id="nextOfKinName"
                     type="text"
                     value={nextOfKinName}
-                    onChange={(e) => setNextOfKinName(e.target.value)}
+                    onChange={(e) =>
+                      setNextOfKinName(e.target.value)
+                    }
                     autoComplete="name"
                     className={inputClass}
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="nextOfKinPhone" className={labelClass}>
+                  <label
+                    htmlFor="nextOfKinPhone"
+                    className={labelClass}
+                  >
                     Next of Kin Contact Number
                   </label>
 
-                  <input
+                  <PhoneInput
                     id="nextOfKinPhone"
-                    type="tel"
-                    value={nextOfKinPhone}
-                    onChange={(e) => setNextOfKinPhone(e.target.value)}
-                    autoComplete="tel"
-                    className={inputClass}
+                    defaultCountry="ZA"
+                    value={nextOfKinPhone || undefined}
+                    onChange={(value) => setNextOfKinPhone(value || "")}
+                    className="flex items-center gap-3"
+                    numberInputProps={{
+                      className: inputClass,
+                      autoComplete: "tel",
+                    }}
                   />
                 </div>
               </div>
 
               <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
                 <p className="text-sm leading-6 text-slate-600">
-                  Adding a next of kin does not automatically give that person
-                  access to your DNR record.
+                  Adding a next of kin does not automatically give that
+                  person access to your DNR record.
                 </p>
               </div>
             </div>
@@ -395,7 +601,10 @@ export default function RegisterPage() {
 
               <div className="mt-5 flex items-center justify-center gap-2 text-center text-xs leading-5 text-slate-500">
                 <span className="text-blue-600">✓</span>
-                <span>Your information is used as part of your secure DNR registration.</span>
+                <span>
+                  Your information is used as part of your secure DNR
+                  registration.
+                </span>
               </div>
             </div>
           </div>

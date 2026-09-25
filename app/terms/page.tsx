@@ -69,8 +69,8 @@ export default function Page() {
             <p>MyDNR provides a digital service for recording, securely storing, verifying and retrieving DNR documentation. MyDNR does not itself create a DNR decision and does not determine whether a document is legally or clinically valid.</p>
           </Section>
           <Section title={'Who operates MyDNR'}>
-            <p>MyDNR South Africa is operated by <strong>[MyDNR South Africa]</strong>, registration number <strong>[To be added]</strong>, registered in <strong>[South Africa]</strong>.</p>
-            <p>Physical and legal-service address: <strong>[Plot 126, Zwavelpoort, Pretoria, South Africa]</strong><br />Email: <strong>[info@mydnr.co.za]</strong><br />Telephone: <strong>[+44 7484245826]</strong></p>
+            <p>MyDNR South Africa is operated by <strong>[MyDNR South Africa]</strong>,  registered in <strong>[South Africa]</strong>.</p>
+            <p>Physical and legal-service address: <strong>[Plot 126, Zwavelpoort, Pretoria, South Africa]</strong><br />Email: <strong>[info@mydnr.co.za]</strong><br /> <strong></strong></p>
           </Section>
           <Section title={'Using the service'}>
             <p>You must provide information that is accurate and complete to the best of your knowledge and may not use MyDNR to impersonate another person, submit fraudulent documents, obtain records without authority, interfere with the service, or use information obtained through MyDNR unlawfully.</p>
@@ -100,6 +100,18 @@ export default function Page() {
           </Section>
           <Section title={'Changes and governing law'}>
             <p>We may update these terms as the service develops. The version in force when a transaction is concluded will apply to that transaction to the extent required by law. These terms are governed by the laws of the Republic of South Africa.</p>
+            <p><strong>Effective date:</strong> [01 October 2026]</p>
+          </Section>
+          <Section title={'Duration'}>
+            <p>A DNR registration with MyDNR will remain registered and securely stored for a period of five (5) years from the date on which the registration is successfully completed, unless the registration is revoked earlier by the registered individual in accordance with the MyDNR revocation process.
+
+Prior to the expiry of the five-year registration period, MyDNR will use the contact details associated with the registration to contact the registered individual and invite them to renew or reconfirm their DNR registration.
+
+Renewal or reconfirmation provides the registered individual with an opportunity to confirm that their DNR request continues to reflect their wishes and that the personal and contact information held in connection with the registration remains current.
+
+If the registration is not renewed or reconfirmed within the applicable renewal period, MyDNR may mark the registration as expired and it will no longer be made available as an active DNR registration through the MyDNR verification or document retrieval services.
+
+It remains the responsibility of the registered individual to ensure that the contact information provided to MyDNR is kept up to date so that renewal or reconfirmation communications can be received..</p>
             <p><strong>Effective date:</strong> [01 October 2026]</p>
           </Section>
         </div>

@@ -66,15 +66,15 @@ export default function Page() {
       <section className="mx-auto max-w-5xl px-5 py-10 sm:px-8 sm:py-14">
         <div className="space-y-8 rounded-[28px] border border-blue-100 bg-white p-6 shadow-[0_18px_55px_rgba(15,40,80,0.06)] sm:p-10">
           <Section title={'General support'}>
-            <p>Email: <strong>[info@mydnr.co.za]</strong><br />Telephone: <strong>[+44 7484245826]</strong><br />Support hours: <strong>[09:00-17:00 South African Time]</strong></p>
+            <p>Email: <strong>[info@mydnr.co.za]</strong><br /><strong></strong><br />Support hours: <strong>[09:00-17:00 South African Time]</strong></p>
             <p>Please do not send identity documents, DNR documents or other sensitive personal information by ordinary email unless MyDNR has specifically instructed you to use an approved secure channel.</p>
           </Section>
           <Section title={'Privacy and personal information'}>
-            <p>For privacy questions or requests concerning your personal information, contact the MyDNR Information Officer:</p>
-            <p><strong>[M Thompson CIO/CDO]</strong><br />Email: <strong>[info@mydnr.co.za]</strong></p>
+            <p>For privacy questions or requests concerning your personal information, contact the MyDNR Information Officer on the email address provided:</p>
+            <p><strong></strong><br />Email: <strong>[info@mydnr.co.za]</strong></p>
           </Section>
           <Section title={'Business details'}>
-            <p>MyDNR South Africa is operated by <strong>[MyDNR South Africa]</strong>.<br />Registration number: <strong>[To be added]</strong><br />Physical address: <strong>[PHYSICAL ADDRESS]</strong><br />Address for service of legal documents: <strong>[LEGAL SERVICE ADDRESS]</strong></p>
+            <p>MyDNR South Africa is operated by <strong>[MyDNR South Africa]</strong>.<br />Registration number: <strong>[To be added]</strong><br />Physical address: <strong>[Plot 126, Zwavelpoort, Pretoria]</strong><br />Address for service of legal documents: <strong>[Plot 126, Zwavelpoort, Pretoria]</strong></p>
           </Section>
           <Section title={'Medical emergencies'}>
             <p><strong>MyDNR is not an emergency medical service.</strong> If someone requires urgent medical assistance, contact the appropriate emergency service or healthcare provider rather than waiting for a response from MyDNR support.</p>

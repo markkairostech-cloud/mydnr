@@ -3,9 +3,18 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { COUNTRIES } from "@/lib/countries";
+
+type IdentificationType = "sa_id" | "passport";
 
 export default function RequestDocumentPage() {
+  const [identificationType, setIdentificationType] =
+    useState<IdentificationType>("sa_id");
+
   const [saIdNumber, setSaIdNumber] = useState("");
+  const [passportNumber, setPassportNumber] = useState("");
+  const [passportCountry, setPassportCountry] = useState("");
+
   const [requestorName, setRequestorName] = useState("");
   const [requestorEmail, setRequestorEmail] = useState("");
   const [confirmed, setConfirmed] = useState(false);
@@ -17,38 +26,84 @@ export default function RequestDocumentPage() {
       window.location.search
     );
 
-    const idFromCheck =
+    const typeFromCheck =
+      params.get("identificationType") || "";
+
+    const saIdFromCheck =
       params.get("saIdNumber") || "";
 
-    if (/^\d{13}$/.test(idFromCheck)) {
-      setSaIdNumber(idFromCheck);
+    const passportFromCheck =
+      params.get("passportNumber") || "";
+
+    const countryFromCheck =
+      params.get("passportCountry") || "";
+
+    if (
+      typeFromCheck === "sa_id" &&
+      /^\d{13}$/.test(saIdFromCheck)
+    ) {
+      setIdentificationType("sa_id");
+      setSaIdNumber(saIdFromCheck);
+    }
+
+    if (
+      typeFromCheck === "passport" &&
+      passportFromCheck &&
+      countryFromCheck
+    ) {
+      setIdentificationType("passport");
+      setPassportNumber(passportFromCheck);
+      setPassportCountry(countryFromCheck);
     }
   }, []);
 
   const handleContinue = async () => {
-    /*
-     * Clear any previous inline message whenever
-     * the user makes another attempt.
-     */
     setErrorMessage("");
 
-    const cleanedId = saIdNumber.trim();
+    const cleanedSaId = saIdNumber.trim();
+    const cleanedPassportNumber =
+      passportNumber.trim();
+    const cleanedPassportCountry =
+      passportCountry.trim();
+
     const cleanedName = requestorName.trim();
+
     const cleanedEmail =
       requestorEmail.trim().toLowerCase();
 
-    if (!cleanedId) {
-      setErrorMessage(
-        "Please enter the South African ID Number of the person whose DNR document you are requesting."
-      );
-      return;
+    /*
+     * Validate the selected identity.
+     */
+    if (identificationType === "sa_id") {
+      if (!cleanedSaId) {
+        setErrorMessage(
+          "Please enter the South African ID Number of the person whose DNR document you are requesting."
+        );
+        return;
+      }
+
+      if (!/^\d{13}$/.test(cleanedSaId)) {
+        setErrorMessage(
+          "Please enter a valid 13-digit South African ID Number."
+        );
+        return;
+      }
     }
 
-    if (!/^\d{13}$/.test(cleanedId)) {
-      setErrorMessage(
-        "Please enter a valid 13-digit South African ID Number."
-      );
-      return;
+    if (identificationType === "passport") {
+      if (!cleanedPassportNumber) {
+        setErrorMessage(
+          "Please enter the Passport Number of the person whose DNR document you are requesting."
+        );
+        return;
+      }
+
+      if (!cleanedPassportCountry) {
+        setErrorMessage(
+          "Please select the Country of Issue."
+        );
+        return;
+      }
     }
 
     if (!cleanedName) {
@@ -85,8 +140,33 @@ export default function RequestDocumentPage() {
     try {
       setProcessing(true);
 
+      /*
+       * API values use the database identity names.
+       */
+      const apiIdentificationType =
+        identificationType === "sa_id"
+          ? "SA_ID"
+          : "PASSPORT";
+
       const requestData = {
-        saIdNumber: cleanedId,
+        identificationType:
+          apiIdentificationType,
+
+        saIdNumber:
+          identificationType === "sa_id"
+            ? cleanedSaId
+            : "",
+
+        passportNumber:
+          identificationType === "passport"
+            ? cleanedPassportNumber
+            : "",
+
+        passportCountry:
+          identificationType === "passport"
+            ? cleanedPassportCountry
+            : "",
+
         requestorName: cleanedName,
         requestorEmail: cleanedEmail,
         consentConfirmed: true,
@@ -99,9 +179,11 @@ export default function RequestDocumentPage() {
         "/api/document-request",
         {
           method: "POST",
+
           headers: {
             "Content-Type": "application/json",
           },
+
           body: JSON.stringify(requestData),
         }
       );
@@ -145,14 +227,37 @@ export default function RequestDocumentPage() {
         "/api/document-request/payfast/start",
         {
           method: "POST",
+
           headers: {
             "Content-Type": "application/json",
           },
+
           body: JSON.stringify({
             requestId,
-            requestorName: cleanedName,
-            requestorEmail: cleanedEmail,
-            saIdNumber: cleanedId,
+
+            requestorName:
+              cleanedName,
+
+            requestorEmail:
+              cleanedEmail,
+
+            identificationType:
+              apiIdentificationType,
+
+            saIdNumber:
+              identificationType === "sa_id"
+                ? cleanedSaId
+                : "",
+
+            passportNumber:
+              identificationType === "passport"
+                ? cleanedPassportNumber
+                : "",
+
+            passportCountry:
+              identificationType === "passport"
+                ? cleanedPassportCountry
+                : "",
           }),
         }
       );
@@ -203,7 +308,6 @@ export default function RequestDocumentPage() {
 
       document.body.appendChild(form);
       form.submit();
-
     } catch (error: any) {
       console.error(
         "DOCUMENT REQUEST PAYMENT ERROR:",
@@ -219,14 +323,21 @@ export default function RequestDocumentPage() {
     }
   };
 
+  const clearError = () => {
+    if (errorMessage) {
+      setErrorMessage("");
+    }
+  };
+
   return (
     <main className="min-h-screen bg-[#f5f9fd] text-slate-950">
-
       {/* HEADER */}
       <header className="border-b border-blue-100 bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 sm:px-8">
-
-          <Link href="/" aria-label="Back to MyDNR home">
+          <Link
+            href="/"
+            aria-label="Back to MyDNR home"
+          >
             <Image
               src="/images/mydnr-logo.png"
               alt="MyDNR South Africa"
@@ -243,14 +354,12 @@ export default function RequestDocumentPage() {
           >
             Back to MyDNR
           </Link>
-
         </div>
       </header>
 
       {/* PAGE INTRO */}
       <section className="border-b border-blue-100 bg-[#eef6fd]">
         <div className="mx-auto max-w-4xl px-5 py-10 sm:px-8 sm:py-14">
-
           <p className="mb-3 text-xs font-bold uppercase tracking-[0.28em] text-blue-600">
             Secure Document Retrieval
           </p>
@@ -263,20 +372,15 @@ export default function RequestDocumentPage() {
             Securely request access to a DNR document
             registered with MyDNR.
           </p>
-
         </div>
       </section>
 
       {/* MAIN CONTENT */}
       <section className="mx-auto max-w-4xl px-5 py-8 sm:px-8 sm:py-10">
-
         <div className="overflow-hidden rounded-[28px] border border-blue-100 bg-white shadow-[0_16px_45px_rgba(15,23,42,0.06)]">
-
           {/* INTRO PANEL */}
           <div className="border-b border-blue-100 bg-[#f8fbff] px-6 py-7 sm:px-9 sm:py-8">
-
             <div className="flex items-start gap-4">
-
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-xl font-bold text-blue-700">
                 ↓
               </div>
@@ -297,17 +401,13 @@ export default function RequestDocumentPage() {
                   be unable to communicate them themselves.
                 </p>
               </div>
-
             </div>
           </div>
 
           <div className="space-y-8 px-6 py-8 sm:px-9 sm:py-10">
-
             {/* PROCESS EXPLANATION */}
             <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-5">
-
               <div className="flex items-start gap-3">
-
                 <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">
                   i
                 </div>
@@ -323,7 +423,6 @@ export default function RequestDocumentPage() {
                     be recorded for security and audit purposes.
                   </p>
                 </div>
-
               </div>
             </div>
 
@@ -335,7 +434,6 @@ export default function RequestDocumentPage() {
                 className="rounded-2xl border border-rose-200 bg-rose-50 p-5 sm:p-6"
               >
                 <div className="flex items-start gap-4">
-
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-rose-100 font-bold text-rose-700">
                     !
                   </div>
@@ -349,14 +447,12 @@ export default function RequestDocumentPage() {
                       {errorMessage}
                     </p>
                   </div>
-
                 </div>
               </div>
             )}
 
             {/* REQUEST DETAILS */}
             <div>
-
               <div className="mb-6">
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-600">
                   DNR Record
@@ -365,60 +461,172 @@ export default function RequestDocumentPage() {
                 <h3 className="mt-2 text-xl font-bold text-slate-950">
                   Whose DNR document are you requesting?
                 </h3>
+
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  Select the identification document used when
+                  the DNR was registered.
+                </p>
               </div>
 
-              {/* SA ID NUMBER */}
-              <div>
-                <label
-                  htmlFor="saIdNumber"
-                  className="mb-2 block text-sm font-semibold text-slate-900"
-                >
-                  South African ID Number
+              {/* IDENTIFICATION TYPE */}
+              <div className="mb-6">
+                <label className="mb-2 block text-sm font-semibold text-slate-900">
+                  Identification Type
                 </label>
 
-                <input
-                  id="saIdNumber"
-                  type="text"
-                  value={saIdNumber}
-                  onChange={(e) => {
-                    const value =
-                      e.target.value.replace(/\D/g, "");
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIdentificationType("sa_id");
+                      setPassportNumber("");
+                      setPassportCountry("");
+                      clearError();
+                    }}
+                    className={`rounded-xl border px-4 py-3 text-sm font-semibold transition ${
+                      identificationType === "sa_id"
+                        ? "border-blue-500 bg-blue-50 text-blue-700 ring-2 ring-blue-100"
+                        : "border-blue-100 bg-white text-slate-700 hover:border-blue-200"
+                    }`}
+                  >
+                    South African ID
+                  </button>
 
-                    setSaIdNumber(
-                      value.slice(0, 13)
-                    );
-
-                    if (errorMessage) {
-                      setErrorMessage("");
-                    }
-                  }}
-                  placeholder="0000000000000"
-                  maxLength={13}
-                  inputMode="numeric"
-                  autoComplete="off"
-                  className="w-full rounded-xl border border-blue-100 bg-white px-4 py-4 text-center text-xl font-semibold tracking-[0.18em] text-slate-900 outline-none transition placeholder:font-normal placeholder:text-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 sm:text-2xl sm:tracking-[0.28em]"
-                />
-
-                <div className="mt-2 flex items-start justify-between gap-4">
-                  <p className="text-sm leading-6 text-slate-500">
-                    Enter the 13-digit South African ID Number
-                    of the person whose DNR document you are
-                    requesting.
-                  </p>
-
-                  <span className="shrink-0 text-xs font-semibold text-slate-400">
-                    {saIdNumber.length}/13
-                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIdentificationType("passport");
+                      setSaIdNumber("");
+                      clearError();
+                    }}
+                    className={`rounded-xl border px-4 py-3 text-sm font-semibold transition ${
+                      identificationType === "passport"
+                        ? "border-blue-500 bg-blue-50 text-blue-700 ring-2 ring-blue-100"
+                        : "border-blue-100 bg-white text-slate-700 hover:border-blue-200"
+                    }`}
+                  >
+                    Passport
+                  </button>
                 </div>
               </div>
 
+              {/* SA ID */}
+              {identificationType === "sa_id" && (
+                <div>
+                  <label
+                    htmlFor="saIdNumber"
+                    className="mb-2 block text-sm font-semibold text-slate-900"
+                  >
+                    South African ID Number
+                  </label>
+
+                  <input
+                    id="saIdNumber"
+                    type="text"
+                    value={saIdNumber}
+                    onChange={(e) => {
+                      const value =
+                        e.target.value.replace(/\D/g, "");
+
+                      setSaIdNumber(
+                        value.slice(0, 13)
+                      );
+
+                      clearError();
+                    }}
+                    placeholder="0000000000000"
+                    maxLength={13}
+                    inputMode="numeric"
+                    autoComplete="off"
+                    className="w-full rounded-xl border border-blue-100 bg-white px-4 py-4 text-center text-xl font-semibold tracking-[0.18em] text-slate-900 outline-none transition placeholder:font-normal placeholder:text-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 sm:text-2xl sm:tracking-[0.28em]"
+                  />
+
+                  <div className="mt-2 flex items-start justify-between gap-4">
+                    <p className="text-sm leading-6 text-slate-500">
+                      Enter the 13-digit South African ID Number
+                      of the person whose DNR document you are
+                      requesting.
+                    </p>
+
+                    <span className="shrink-0 text-xs font-semibold text-slate-400">
+                      {saIdNumber.length}/13
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* PASSPORT */}
+              {identificationType === "passport" && (
+                <div className="space-y-6">
+                  <div>
+                    <label
+                      htmlFor="passportNumber"
+                      className="mb-2 block text-sm font-semibold text-slate-900"
+                    >
+                      Passport Number
+                    </label>
+
+                    <input
+                      id="passportNumber"
+                      type="text"
+                      value={passportNumber}
+                      onChange={(e) => {
+                        setPassportNumber(
+                          e.target.value
+                        );
+                        clearError();
+                      }}
+                      autoComplete="off"
+                      className="w-full rounded-xl border border-blue-100 bg-white px-4 py-4 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                    />
+
+                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                      Enter the Passport Number used when the
+                      DNR was registered.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="passportCountry"
+                      className="mb-2 block text-sm font-semibold text-slate-900"
+                    >
+                      Country of Issue
+                    </label>
+
+                    <select
+                      id="passportCountry"
+                      value={passportCountry}
+                      onChange={(e) => {
+                        setPassportCountry(
+                          e.target.value
+                        );
+                        clearError();
+                      }}
+                      className="w-full rounded-xl border border-blue-100 bg-white px-4 py-4 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                    >
+                      <option value="">
+                        Select country of issue
+                      </option>
+
+                      {COUNTRIES.map((country) => (
+                        <option
+                          key={country}
+                          value={country}
+                        >
+                          {country}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="border-t border-blue-100" />
 
             {/* REQUESTOR DETAILS */}
             <div>
-
               <div className="mb-6">
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-600">
                   Your Details
@@ -435,7 +643,6 @@ export default function RequestDocumentPage() {
               </div>
 
               <div className="space-y-6">
-
                 {/* FULL NAME */}
                 <div>
                   <label
@@ -453,10 +660,7 @@ export default function RequestDocumentPage() {
                       setRequestorName(
                         e.target.value
                       );
-
-                      if (errorMessage) {
-                        setErrorMessage("");
-                      }
+                      clearError();
                     }}
                     autoComplete="name"
                     className="w-full rounded-xl border border-blue-100 bg-white px-4 py-4 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
@@ -480,10 +684,7 @@ export default function RequestDocumentPage() {
                       setRequestorEmail(
                         e.target.value
                       );
-
-                      if (errorMessage) {
-                        setErrorMessage("");
-                      }
+                      clearError();
                     }}
                     autoComplete="email"
                     className="w-full rounded-xl border border-blue-100 bg-white px-4 py-4 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
@@ -494,7 +695,6 @@ export default function RequestDocumentPage() {
                     this document request.
                   </p>
                 </div>
-
               </div>
             </div>
 
@@ -506,7 +706,6 @@ export default function RequestDocumentPage() {
                   : "border-blue-100 bg-[#fbfdff] hover:border-blue-200"
               }`}
             >
-
               <input
                 type="checkbox"
                 checked={confirmed}
@@ -514,10 +713,7 @@ export default function RequestDocumentPage() {
                   setConfirmed(
                     e.target.checked
                   );
-
-                  if (errorMessage) {
-                    setErrorMessage("");
-                  }
+                  clearError();
                 }}
                 className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer accent-blue-600"
               />
@@ -535,14 +731,11 @@ export default function RequestDocumentPage() {
                   purposes.
                 </span>
               </div>
-
             </label>
 
             {/* FEE PANEL */}
             <div className="overflow-hidden rounded-2xl border border-blue-200 bg-blue-50/60">
-
               <div className="p-7 text-center sm:p-8">
-
                 <p className="text-xs font-bold uppercase tracking-[0.22em] text-blue-600">
                   Document Retrieval Fee
                 </p>
@@ -562,7 +755,6 @@ export default function RequestDocumentPage() {
                   DNR document can be released through the
                   MyDNR retrieval process.
                 </p>
-
               </div>
 
               <div className="border-t border-blue-100 bg-white/60 px-6 py-4 text-center">
@@ -571,14 +763,11 @@ export default function RequestDocumentPage() {
                   complete your payment securely.
                 </p>
               </div>
-
             </div>
 
             {/* IMPORTANT NOTICE */}
             <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-6 sm:p-7">
-
               <div className="flex items-start gap-4">
-
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 font-bold text-amber-700">
                   !
                 </div>
@@ -596,13 +785,11 @@ export default function RequestDocumentPage() {
                     date and time of access.
                   </p>
                 </div>
-
               </div>
             </div>
 
             {/* PAYMENT BUTTON */}
             <div className="border-t border-blue-100 pt-7">
-
               <button
                 type="button"
                 onClick={handleContinue}
@@ -618,18 +805,14 @@ export default function RequestDocumentPage() {
                 Your document request is recorded before
                 you are transferred to PayFast.
               </p>
-
             </div>
-
           </div>
         </div>
       </section>
 
       {/* HOW IT WORKS */}
       <section className="mx-auto max-w-4xl px-5 pb-10 sm:px-8 sm:pb-12">
-
         <div className="grid gap-4 sm:grid-cols-3">
-
           <div className="rounded-2xl border border-blue-100 bg-white p-5 text-center">
             <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700">
               1
@@ -640,7 +823,7 @@ export default function RequestDocumentPage() {
             </p>
 
             <p className="mt-1 text-xs leading-5 text-slate-500">
-              Provide the DNR ID Number and your
+              Provide the DNR identification details and your
               requestor details.
             </p>
           </div>
@@ -674,15 +857,12 @@ export default function RequestDocumentPage() {
               retrieval process.
             </p>
           </div>
-
         </div>
       </section>
 
       {/* REASSURANCE */}
       <section className="border-t border-blue-100 bg-[#eef6fd]">
-
         <div className="mx-auto grid max-w-4xl gap-5 px-5 py-8 sm:grid-cols-3 sm:px-8">
-
           <div className="text-center">
             <div className="text-lg text-blue-600">
               ✓
@@ -712,17 +892,13 @@ export default function RequestDocumentPage() {
               PayFast checkout
             </p>
           </div>
-
         </div>
       </section>
 
       {/* FOOTER */}
       <footer className="border-t border-blue-100 bg-white">
-
         <div className="mx-auto flex max-w-6xl flex-col gap-6 px-5 py-7 sm:px-8 md:flex-row md:items-center md:justify-between">
-
           <div className="flex items-center gap-4">
-
             <Image
               src="/images/mydnr-logo.png"
               alt="MyDNR"
@@ -734,11 +910,9 @@ export default function RequestDocumentPage() {
             <p className="text-sm text-slate-500">
               Secure DNR registration &amp; retrieval.
             </p>
-
           </div>
 
           <nav className="flex flex-wrap gap-x-5 gap-y-3 text-sm text-slate-500">
-
             <Link
               href="/privacy"
               className="hover:text-blue-700"
@@ -773,12 +947,9 @@ export default function RequestDocumentPage() {
             >
               About
             </Link>
-
           </nav>
-
         </div>
       </footer>
-
     </main>
   );
 }

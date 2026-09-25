@@ -4,6 +4,8 @@ import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 const ACCESS_WINDOW_HOURS = 24;
 
+type IdentificationType = "SA_ID" | "PASSPORT";
+
 function hashAccessToken(token: string) {
   return crypto
     .createHash("sha256")
@@ -15,8 +17,22 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
+    const identificationType = String(
+      body?.identificationType || ""
+    )
+      .trim()
+      .toUpperCase() as IdentificationType;
+
     const saIdNumber = String(
       body?.saIdNumber || ""
+    ).trim();
+
+    const passportNumber = String(
+      body?.passportNumber || ""
+    ).trim();
+
+    const passportCountry = String(
+      body?.passportCountry || ""
     ).trim();
 
     const requestorName = String(
@@ -32,7 +48,32 @@ export async function POST(req: Request) {
     const consentConfirmed =
       body?.consentConfirmed === true;
 
-    if (!/^\d{13}$/.test(saIdNumber)) {
+    /*
+     * Validate identity type.
+     */
+    if (
+      identificationType !== "SA_ID" &&
+      identificationType !== "PASSPORT"
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Please select a valid identification type.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    /*
+     * Validate South African ID.
+     */
+    if (
+      identificationType === "SA_ID" &&
+      !/^\d{13}$/.test(saIdNumber)
+    ) {
       return NextResponse.json(
         {
           success: false,
@@ -43,6 +84,37 @@ export async function POST(req: Request) {
           status: 400,
         }
       );
+    }
+
+    /*
+     * Validate Passport.
+     */
+    if (identificationType === "PASSPORT") {
+      if (!passportNumber) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              "A valid Passport Number is required.",
+          },
+          {
+            status: 400,
+          }
+        );
+      }
+
+      if (!passportCountry) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              "Country of Issue is required.",
+          },
+          {
+            status: 400,
+          }
+        );
+      }
     }
 
     if (!requestorName) {
@@ -100,34 +172,43 @@ export async function POST(req: Request) {
       );
     }
 
-    const supabase =
-      getSupabaseAdmin();
+    const supabase = getSupabaseAdmin();
 
     /*
-     * Find the current authoritative DNR
-     * registration for this South African ID Number.
+     * Find the current authoritative DNR registration.
      *
-     * Only a paid + active registration may be
-     * requested for retrieval.
+     * The lookup depends on whether the registration
+     * uses a South African ID or Passport.
      */
+    let registrationQuery = supabase
+      .from("dnr_registrations")
+      .select("id, created_at")
+      .eq("payment_status", "paid")
+      .eq("registration_status", "active");
+
+    if (identificationType === "SA_ID") {
+      registrationQuery =
+        registrationQuery.eq(
+          "sa_id_number",
+          saIdNumber
+        );
+    } else {
+      registrationQuery =
+        registrationQuery
+          .eq(
+            "passport_number",
+            passportNumber
+          )
+          .eq(
+            "passport_country",
+            passportCountry
+          );
+    }
+
     const {
       data: registration,
       error: registrationError,
-    } = await supabase
-      .from("dnr_registrations")
-      .select("id, created_at")
-      .eq(
-        "sa_id_number",
-        saIdNumber
-      )
-      .eq(
-        "payment_status",
-        "paid"
-      )
-      .eq(
-        "registration_status",
-        "active"
-      )
+    } = await registrationQuery
       .order(
         "created_at",
         {
@@ -146,7 +227,7 @@ export async function POST(req: Request) {
         {
           success: false,
           error:
-            "No active DNR registration exists for this ID Number.",
+            "No active DNR registration exists for these identification details.",
         },
         {
           status: 404,
@@ -162,22 +243,20 @@ export async function POST(req: Request) {
      *
      * Supabase stores only the SHA-256 hash.
      */
-    const accessToken =
-      crypto
-        .randomBytes(32)
-        .toString("hex");
+    const accessToken = crypto
+      .randomBytes(32)
+      .toString("hex");
 
     const accessTokenHash =
       hashAccessToken(accessToken);
 
-    const accessExpiresAt =
-      new Date(
-        Date.now() +
-          ACCESS_WINDOW_HOURS *
-            60 *
-            60 *
-            1000
-      ).toISOString();
+    const accessExpiresAt = new Date(
+      Date.now() +
+        ACCESS_WINDOW_HOURS *
+          60 *
+          60 *
+          1000
+    ).toISOString();
 
     /*
      * Create the document retrieval request.
@@ -189,8 +268,23 @@ export async function POST(req: Request) {
       .from("document_requests")
       .insert([
         {
+          identification_type:
+            identificationType,
+
           sa_id_number:
-            saIdNumber,
+            identificationType === "SA_ID"
+              ? saIdNumber
+              : null,
+
+          passport_number:
+            identificationType === "PASSPORT"
+              ? passportNumber
+              : null,
+
+          passport_country:
+            identificationType === "PASSPORT"
+              ? passportCountry
+              : null,
 
           requestor_name:
             requestorName,
@@ -214,9 +308,7 @@ export async function POST(req: Request) {
             accessExpiresAt,
         },
       ])
-      .select(
-        "id"
-      )
+      .select("id")
       .single();
 
     if (error) {

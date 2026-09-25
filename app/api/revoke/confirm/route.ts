@@ -7,6 +7,10 @@ type StorageCheckResult = {
   exists: boolean;
 };
 
+type IdentificationType =
+  | "SA_ID"
+  | "PASSPORT";
+
 function splitStoragePath(path: string) {
   const parts = path
     .split("/")
@@ -212,7 +216,10 @@ export async function POST(
         `
           id,
           registration_id,
+          identification_type,
           sa_id_number,
+          passport_number,
+          passport_country,
           verification_document_path,
           identity_evidence_supplied,
           identity_verification_status,
@@ -307,7 +314,10 @@ export async function POST(
       .select(
         `
           id,
+          identification_type,
           sa_id_number,
+          passport_number,
+          passport_country,
           payment_status,
           registration_status,
           id_document_path,
@@ -338,12 +348,43 @@ export async function POST(
       );
     }
 
+    /*
+     * Verify that the identity stored on the
+     * revocation request still matches the exact
+     * registration linked to that request.
+     */
+    const identificationType =
+      String(
+        revocationRequest.identification_type || ""
+      ).toUpperCase() as IdentificationType;
+
+    let identityMatches = false;
+
     if (
-      registration.sa_id_number !==
-      revocationRequest.sa_id_number
+      identificationType === "SA_ID"
     ) {
+      identityMatches =
+        registration.identification_type ===
+          "SA_ID" &&
+        registration.sa_id_number ===
+          revocationRequest.sa_id_number;
+    }
+
+    if (
+      identificationType === "PASSPORT"
+    ) {
+      identityMatches =
+        registration.identification_type ===
+          "PASSPORT" &&
+        registration.passport_number ===
+          revocationRequest.passport_number &&
+        registration.passport_country ===
+          revocationRequest.passport_country;
+    }
+
+    if (!identityMatches) {
       console.error(
-        "REVOCATION: SA ID mismatch between request and registration",
+        "REVOCATION: identity mismatch between request and registration",
         revocationRequestId
       );
 
@@ -507,8 +548,23 @@ export async function POST(
             event_type:
               "dnr_revocation_started",
 
+            identification_type:
+              identificationType,
+
             sa_id_number:
-              revocationRequest.sa_id_number,
+              identificationType === "SA_ID"
+                ? revocationRequest.sa_id_number
+                : null,
+
+            passport_number:
+              identificationType === "PASSPORT"
+                ? revocationRequest.passport_number
+                : null,
+
+            passport_country:
+              identificationType === "PASSPORT"
+                ? revocationRequest.passport_country
+                : null,
 
             registration_id:
               registration.id,
@@ -562,8 +618,8 @@ export async function POST(
      *    documents exist before deleting anything.
      *
      * On a retry, one or more objects may already
-     *    be absent because a previous attempt got
-     *    partway through the process.
+     * be absent because a previous attempt got
+     * partway through the process.
      */
     if (
       revocationRequest.revocation_status ===
@@ -606,7 +662,7 @@ export async function POST(
 
     /*
      * 6. Delete and independently verify the
-     *    original registration ID document.
+     *    original registration identification document.
      */
     await ensureStorageObjectDeleted(
       supabase,

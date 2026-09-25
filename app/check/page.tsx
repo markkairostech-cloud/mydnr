@@ -3,41 +3,80 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { COUNTRIES } from "@/lib/countries";
 
 type CheckResult = "found" | "not-found" | null;
+type IdentificationType = "sa_id" | "passport";
 
 export default function CheckPage() {
+  const [identificationType, setIdentificationType] =
+    useState<IdentificationType>("sa_id");
+
   const [saIdNumber, setSaIdNumber] = useState("");
+  const [passportNumber, setPassportNumber] = useState("");
+  const [passportCountry, setPassportCountry] = useState("");
+
   const [result, setResult] = useState<CheckResult>(null);
   const [checking, setChecking] = useState(false);
 
+  const handleIdentificationTypeChange = (
+    type: IdentificationType
+  ) => {
+    setIdentificationType(type);
+    setResult(null);
+  };
+
   const handleCheck = async () => {
-    const cleanedId = saIdNumber.trim();
+    let query = "";
 
-    if (!cleanedId) {
-      alert(
-        "Please enter the South African ID Number of the person whose DNR record you would like to check."
-      );
-      return;
-    }
+    if (identificationType === "sa_id") {
+      const cleanedId = saIdNumber.trim();
 
-    if (!/^\d{13}$/.test(cleanedId)) {
-      alert(
-        "Please enter a valid 13-digit South African ID Number."
-      );
-      return;
+      if (!cleanedId) {
+        alert(
+          "Please enter the South African ID Number of the person whose DNR record you would like to check."
+        );
+        return;
+      }
+
+      if (!/^\d{13}$/.test(cleanedId)) {
+        alert(
+          "Please enter a valid 13-digit South African ID Number."
+        );
+        return;
+      }
+
+      query =
+        `identificationType=sa_id&saIdNumber=${encodeURIComponent(
+          cleanedId
+        )}`;
+    } else {
+      const cleanedPassport = passportNumber.trim();
+      const cleanedCountry = passportCountry.trim();
+
+      if (!cleanedPassport) {
+        alert("Please enter the Passport Number.");
+        return;
+      }
+
+      if (!cleanedCountry) {
+        alert("Please enter the Passport Country of Issue.");
+        return;
+      }
+
+      query =
+        `identificationType=passport&passportNumber=${encodeURIComponent(
+          cleanedPassport
+        )}&passportCountry=${encodeURIComponent(cleanedCountry)}`;
     }
 
     try {
       setChecking(true);
       setResult(null);
 
-      const response = await fetch(
-        `/api/check?saIdNumber=${encodeURIComponent(cleanedId)}`,
-        {
-          cache: "no-store",
-        }
-      );
+      const response = await fetch(`/api/check?${query}`, {
+        cache: "no-store",
+      });
 
       const data = await response.json();
 
@@ -59,9 +98,19 @@ export default function CheckPage() {
     }
   };
 
+  const requestDocumentHref =
+    identificationType === "sa_id"
+      ? `/request-document?identificationType=sa_id&saIdNumber=${encodeURIComponent(
+          saIdNumber.trim()
+        )}`
+      : `/request-document?identificationType=passport&passportNumber=${encodeURIComponent(
+          passportNumber.trim()
+        )}&passportCountry=${encodeURIComponent(
+          passportCountry.trim()
+        )}`;
+
   return (
     <main className="min-h-screen bg-[#f5f9fd] text-slate-950">
-
       {/* HEADER */}
       <header className="border-b border-blue-100 bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 sm:px-8">
@@ -98,7 +147,7 @@ export default function CheckPage() {
 
           <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
             Quickly check whether a DNR record has been registered
-            with MyDNR for a South African ID Number.
+            with MyDNR using a South African ID or Passport.
           </p>
         </div>
       </section>
@@ -106,7 +155,6 @@ export default function CheckPage() {
       {/* MAIN CONTENT */}
       <section className="mx-auto max-w-4xl px-5 py-8 sm:px-8 sm:py-10">
         <div className="overflow-hidden rounded-[28px] border border-blue-100 bg-white shadow-[0_16px_45px_rgba(15,23,42,0.06)]">
-
           {/* INTRO PANEL */}
           <div className="border-b border-blue-100 bg-[#f8fbff] px-6 py-7 sm:px-9 sm:py-8">
             <div className="flex items-start gap-4">
@@ -124,7 +172,7 @@ export default function CheckPage() {
                 </h2>
 
                 <p className="mt-3 max-w-2xl leading-7 text-slate-600">
-                  Enter the South African ID Number of the person
+                  Enter the identification details of the person
                   whose DNR record you would like to check.
                 </p>
               </div>
@@ -132,7 +180,6 @@ export default function CheckPage() {
           </div>
 
           <div className="space-y-7 px-6 py-8 sm:px-9 sm:py-10">
-
             {/* PRIVACY EXPLANATION */}
             <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-5">
               <div className="flex items-start gap-3">
@@ -154,42 +201,172 @@ export default function CheckPage() {
               </div>
             </div>
 
-            {/* ID INPUT */}
+            {/* IDENTIFICATION TYPE */}
             <div>
-              <label
-                htmlFor="saIdNumber"
-                className="mb-2 block text-sm font-semibold text-slate-900"
-              >
-                South African ID Number
-              </label>
+              <p className="mb-3 block text-sm font-semibold text-slate-900">
+                Identification Type
+              </p>
 
-              <input
-                id="saIdNumber"
-                type="text"
-                value={saIdNumber}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/\D/g, "");
+              <div className="grid gap-3 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleIdentificationTypeChange("sa_id")
+                  }
+                  className={`rounded-xl border px-4 py-4 text-left transition ${
+                    identificationType === "sa_id"
+                      ? "border-blue-500 bg-blue-50 ring-4 ring-blue-100"
+                      : "border-blue-100 bg-white hover:bg-blue-50/50"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
+                        identificationType === "sa_id"
+                          ? "border-blue-600"
+                          : "border-slate-300"
+                      }`}
+                    >
+                      {identificationType === "sa_id" && (
+                        <span className="h-2.5 w-2.5 rounded-full bg-blue-600" />
+                      )}
+                    </span>
 
-                  setSaIdNumber(value.slice(0, 13));
-                  setResult(null);
-                }}
-                placeholder="0000000000000"
-                maxLength={13}
-                inputMode="numeric"
-                autoComplete="off"
-                className="w-full rounded-xl border border-blue-100 bg-white px-4 py-4 text-center text-xl font-semibold tracking-[0.18em] text-slate-900 outline-none transition placeholder:font-normal placeholder:text-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 sm:text-2xl sm:tracking-[0.28em]"
-              />
+                    <span className="font-semibold text-slate-900">
+                      South African ID
+                    </span>
+                  </div>
+                </button>
 
-              <div className="mt-2 flex items-center justify-between gap-3">
-                <p className="text-sm leading-6 text-slate-500">
-                  Enter the person&apos;s 13-digit South African ID Number.
-                </p>
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleIdentificationTypeChange("passport")
+                  }
+                  className={`rounded-xl border px-4 py-4 text-left transition ${
+                    identificationType === "passport"
+                      ? "border-blue-500 bg-blue-50 ring-4 ring-blue-100"
+                      : "border-blue-100 bg-white hover:bg-blue-50/50"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
+                        identificationType === "passport"
+                          ? "border-blue-600"
+                          : "border-slate-300"
+                      }`}
+                    >
+                      {identificationType === "passport" && (
+                        <span className="h-2.5 w-2.5 rounded-full bg-blue-600" />
+                      )}
+                    </span>
 
-                <span className="shrink-0 text-xs font-semibold text-slate-400">
-                  {saIdNumber.length}/13
-                </span>
+                    <span className="font-semibold text-slate-900">
+                      Passport
+                    </span>
+                  </div>
+                </button>
               </div>
             </div>
+
+            {/* SA ID INPUT */}
+            {identificationType === "sa_id" && (
+              <div>
+                <label
+                  htmlFor="saIdNumber"
+                  className="mb-2 block text-sm font-semibold text-slate-900"
+                >
+                  South African ID Number
+                </label>
+
+                <input
+                  id="saIdNumber"
+                  type="text"
+                  value={saIdNumber}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, "");
+                    setSaIdNumber(value.slice(0, 13));
+                    setResult(null);
+                  }}
+                  placeholder="0000000000000"
+                  maxLength={13}
+                  inputMode="numeric"
+                  autoComplete="off"
+                  className="w-full rounded-xl border border-blue-100 bg-white px-4 py-4 text-center text-xl font-semibold tracking-[0.18em] text-slate-900 outline-none transition placeholder:font-normal placeholder:text-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 sm:text-2xl sm:tracking-[0.28em]"
+                />
+
+                <div className="mt-2 flex items-center justify-between gap-3">
+                  <p className="text-sm leading-6 text-slate-500">
+                    Enter the person&apos;s 13-digit South African
+                    ID Number.
+                  </p>
+
+                  <span className="shrink-0 text-xs font-semibold text-slate-400">
+                    {saIdNumber.length}/13
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* PASSPORT INPUTS */}
+            {identificationType === "passport" && (
+              <div className="space-y-5">
+                <div>
+                  <label
+                    htmlFor="passportNumber"
+                    className="mb-2 block text-sm font-semibold text-slate-900"
+                  >
+                    Passport Number
+                  </label>
+
+                  <input
+                    id="passportNumber"
+                    type="text"
+                    value={passportNumber}
+                    onChange={(e) => {
+                      setPassportNumber(e.target.value);
+                      setResult(null);
+                    }}
+                    placeholder="Enter passport number"
+                    autoComplete="off"
+                    className="w-full rounded-xl border border-blue-100 bg-white px-4 py-4 text-slate-900 outline-none transition placeholder:text-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="passportCountry"
+                    className="mb-2 block text-sm font-semibold text-slate-900"
+                  >
+                    Country of Issue
+                  </label>
+
+                  <select
+                    id="passportCountry"
+                    value={passportCountry}
+                    onChange={(e) => {
+                      setPassportCountry(e.target.value);
+                      setResult(null);
+                    }}
+                    className="w-full rounded-xl border border-blue-100 bg-white px-4 py-4 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  >
+                    <option value="">
+                      Select country of issue
+                    </option>
+
+                    {COUNTRIES.map((country) => (
+                      <option
+                        key={country}
+                        value={country}
+                      >
+                        {country}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
 
             {/* CHECK BUTTON */}
             <button
@@ -223,7 +400,7 @@ export default function CheckPage() {
 
                 <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-emerald-800 sm:text-base sm:leading-7">
                   A registered DNR record exists for the supplied
-                  South African ID Number.
+                  identification details.
                 </p>
 
                 <div className="mt-6 border-t border-emerald-200 pt-6">
@@ -233,9 +410,7 @@ export default function CheckPage() {
                   </p>
 
                   <Link
-                    href={`/request-document?saIdNumber=${encodeURIComponent(
-                      saIdNumber
-                    )}`}
+                    href={requestDocumentHref}
                     className="inline-flex w-full items-center justify-center rounded-xl bg-blue-600 px-6 py-4 font-bold text-white shadow-md transition hover:bg-blue-700 sm:w-auto"
                   >
                     Request Registered DNR Document
@@ -259,18 +434,18 @@ export default function CheckPage() {
                 </p>
 
                 <h3 className="mx-auto mt-2 max-w-xl text-2xl font-bold leading-tight text-slate-900">
-                  DNR Record Not Found For This ID Number
+                  DNR Record Not Found
                 </h3>
 
                 <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">
                   No registered DNR record could be located for the
-                  supplied South African ID Number.
+                  supplied identification details.
                 </p>
 
                 <div className="mt-6 border-t border-slate-200 pt-5">
                   <p className="text-xs leading-5 text-slate-500">
-                    Please check that the ID Number was entered
-                    correctly before trying again.
+                    Please check that the identification details were
+                    entered correctly before trying again.
                   </p>
                 </div>
               </div>
@@ -288,11 +463,12 @@ export default function CheckPage() {
             </div>
 
             <p className="mt-3 text-sm font-semibold text-slate-900">
-              Enter an ID Number
+              Enter Identification
             </p>
 
             <p className="mt-1 text-xs leading-5 text-slate-500">
-              Use the person&apos;s 13-digit South African ID Number.
+              Use the person&apos;s South African ID or Passport
+              details.
             </p>
           </div>
 
@@ -346,7 +522,7 @@ export default function CheckPage() {
           <div className="text-center">
             <div className="text-lg text-blue-600">✓</div>
             <p className="mt-1 text-sm font-semibold text-slate-900">
-              South African service
+              Secure MyDNR service
             </p>
           </div>
         </div>

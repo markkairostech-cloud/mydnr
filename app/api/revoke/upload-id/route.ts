@@ -6,6 +6,8 @@ export const runtime = "nodejs";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
+type IdentificationType = "SA_ID" | "PASSPORT";
+
 type ValidatedFile = {
   buffer: Buffer;
   extension: "pdf" | "jpg" | "png";
@@ -48,8 +50,7 @@ async function validateFile(
     return {
       buffer,
       extension: "pdf",
-      contentType:
-        "application/pdf",
+      contentType: "application/pdf",
     };
   }
 
@@ -63,8 +64,7 @@ async function validateFile(
     return {
       buffer,
       extension: "jpg",
-      contentType:
-        "image/jpeg",
+      contentType: "image/jpeg",
     };
   }
 
@@ -80,8 +80,7 @@ async function validateFile(
   ];
 
   const isPng =
-    buffer.length >=
-      pngSignature.length &&
+    buffer.length >= pngSignature.length &&
     pngSignature.every(
       (byte, index) =>
         buffer[index] === byte
@@ -91,8 +90,7 @@ async function validateFile(
     return {
       buffer,
       extension: "png",
-      contentType:
-        "image/png",
+      contentType: "image/png",
     };
   }
 
@@ -110,19 +108,69 @@ export async function POST(req: Request) {
     const formData =
       await req.formData();
 
+    const identificationType = String(
+      formData.get("identificationType") || ""
+    )
+      .trim()
+      .toUpperCase() as IdentificationType;
+
     const saIdNumber = String(
       formData.get("saIdNumber") || ""
+    ).trim();
+
+    const passportNumber = String(
+      formData.get("passportNumber") || ""
+    ).trim();
+
+    const passportCountry = String(
+      formData.get("passportCountry") || ""
     ).trim();
 
     const idDocument =
       formData.get("idDocument");
 
-    if (!/^\d{13}$/.test(saIdNumber)) {
+    if (
+      identificationType !== "SA_ID" &&
+      identificationType !== "PASSPORT"
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Invalid identification type.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (
+      identificationType === "SA_ID" &&
+      !/^\d{13}$/.test(saIdNumber)
+    ) {
       return NextResponse.json(
         {
           success: false,
           error:
             "A valid 13-digit South African ID Number is required.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (
+      identificationType === "PASSPORT" &&
+      (!passportNumber ||
+        !passportCountry)
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Passport Number and Country of Issue are required.",
         },
         {
           status: 400,
@@ -144,27 +192,44 @@ export async function POST(req: Request) {
     }
 
     const validatedId =
-      await validateFile(
-        idDocument
-      );
+      await validateFile(idDocument);
 
     const supabase =
       getSupabaseAdmin();
 
     /*
-     * Reconfirm that an active paid
+     * Reconfirm that the exact active paid
      * registration still exists.
      */
+    let registrationQuery = supabase
+      .from("dnr_registrations")
+      .select("id")
+      .eq("payment_status", "paid")
+      .eq("registration_status", "active");
+
+    if (identificationType === "SA_ID") {
+      registrationQuery =
+        registrationQuery.eq(
+          "sa_id_number",
+          saIdNumber
+        );
+    } else {
+      registrationQuery =
+        registrationQuery
+          .eq(
+            "passport_number",
+            passportNumber
+          )
+          .eq(
+            "passport_country",
+            passportCountry
+          );
+    }
+
     const {
       data: registrations,
       error: registrationError,
-    } = await supabase
-      .from("dnr_registrations")
-      .select("id")
-      .eq("sa_id_number", saIdNumber)
-      .eq("payment_status", "paid")
-      .eq("registration_status", "active")
-      .limit(1);
+    } = await registrationQuery.limit(1);
 
     if (registrationError) {
       throw registrationError;
@@ -193,9 +258,7 @@ export async function POST(req: Request) {
       `${crypto.randomUUID()}.${validatedId.extension}`;
 
     /*
-     * Upload the temporary identity
-     * evidence to the dedicated
-     * private revocation bucket.
+     * Upload temporary identity evidence.
      */
     const {
       error: uploadError,
@@ -209,9 +272,7 @@ export async function POST(req: Request) {
         {
           contentType:
             validatedId.contentType,
-
           cacheControl: "0",
-
           upsert: false,
         }
       );
@@ -223,7 +284,8 @@ export async function POST(req: Request) {
     }
 
     /*
-     * Create the revocation request.
+     * Create the revocation request and bind
+     * it to the exact registration.
      */
     const {
       data: revocationRequest,
@@ -235,8 +297,23 @@ export async function POST(req: Request) {
           registration_id:
             registrationId,
 
+          identification_type:
+            identificationType,
+
           sa_id_number:
-            saIdNumber,
+            identificationType === "SA_ID"
+              ? saIdNumber
+              : null,
+
+          passport_number:
+            identificationType === "PASSPORT"
+              ? passportNumber
+              : null,
+
+          passport_country:
+            identificationType === "PASSPORT"
+              ? passportCountry
+              : null,
 
           verification_document_path:
             verificationDocumentPath,
@@ -283,7 +360,6 @@ export async function POST(req: Request) {
       revocationRequestId:
         revocationRequest.id,
     });
-
   } catch (error: any) {
     console.error(
       "REVOCATION ID UPLOAD ERROR:",

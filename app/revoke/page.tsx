@@ -3,6 +3,11 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { COUNTRIES } from "@/lib/countries";
+
+type IdentificationType =
+  | "SA_ID"
+  | "PASSPORT";
 
 type LookupResult =
   | "found"
@@ -14,23 +19,53 @@ export default function RevokeDNRPage() {
   const [currentStep, setCurrentStep] =
     useState<1 | 2 | 3 | 4 | 5>(1);
 
-  const [saIdNumber, setSaIdNumber] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [
+    identificationType,
+    setIdentificationType,
+  ] =
+    useState<IdentificationType>("SA_ID");
+
+  const [saIdNumber, setSaIdNumber] =
+    useState("");
+
+  const [passportNumber, setPassportNumber] =
+    useState("");
+
+  const [
+    passportCountry,
+    setPassportCountry,
+  ] = useState("");
+
+  const [isLoading, setIsLoading] =
+    useState(false);
+
   const [lookupResult, setLookupResult] =
     useState<LookupResult>(null);
-  const [errorMessage, setErrorMessage] = useState("");
+
+  const [errorMessage, setErrorMessage] =
+    useState("");
 
   const [idDocument, setIdDocument] =
     useState<File | null>(null);
 
-  const [uploadError, setUploadError] = useState("");
-  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] =
+    useState("");
 
-  const [revocationRequestId, setRevocationRequestId] =
-    useState<string | null>(null);
+  const [isUploading, setIsUploading] =
+    useState(false);
 
-  const [isRevoking, setIsRevoking] = useState(false);
-  const [revocationError, setRevocationError] = useState("");
+  const [
+    revocationRequestId,
+    setRevocationRequestId,
+  ] = useState<string | null>(null);
+
+  const [isRevoking, setIsRevoking] =
+    useState(false);
+
+  const [
+    revocationError,
+    setRevocationError,
+  ] = useState("");
 
   const [
     confirmsVoluntaryRevocation,
@@ -47,15 +82,42 @@ export default function RevokeDNRPage() {
     setConfirmsIdentityDocument,
   ] = useState(false);
 
+  function resetLookupState() {
+    setLookupResult(null);
+    setErrorMessage("");
+  }
+
+  function handleIdentificationTypeChange(
+    type: IdentificationType
+  ) {
+    setIdentificationType(type);
+    resetLookupState();
+
+    setIdDocument(null);
+    setUploadError("");
+    setRevocationRequestId(null);
+  }
+
   async function handleSubmit(
     event: React.FormEvent<HTMLFormElement>
   ) {
     event.preventDefault();
 
-    setLookupResult(null);
-    setErrorMessage("");
+    resetLookupState();
 
-    if (!/^\d{13}$/.test(saIdNumber)) {
+    const cleanedSaId =
+      saIdNumber.trim();
+
+    const cleanedPassport =
+      passportNumber.trim();
+
+    const cleanedCountry =
+      passportCountry.trim();
+
+    if (
+      identificationType === "SA_ID" &&
+      !/^\d{13}$/.test(cleanedSaId)
+    ) {
       setLookupResult("error");
 
       setErrorMessage(
@@ -65,18 +127,73 @@ export default function RevokeDNRPage() {
       return;
     }
 
+    if (
+      identificationType === "PASSPORT" &&
+      !cleanedPassport
+    ) {
+      setLookupResult("error");
+
+      setErrorMessage(
+        "Please enter your Passport Number."
+      );
+
+      return;
+    }
+
+    if (
+      identificationType === "PASSPORT" &&
+      !cleanedCountry
+    ) {
+      setLookupResult("error");
+
+      setErrorMessage(
+        "Please select the Country of Issue for your passport."
+      );
+
+      return;
+    }
+
     try {
       setIsLoading(true);
 
-      const response = await fetch(
-        `/api/revoke/lookup?saIdNumber=${encodeURIComponent(
-          saIdNumber
-        )}`
+      const params =
+        new URLSearchParams();
+
+      params.set(
+        "identificationType",
+        identificationType
       );
 
-      const result = await response.json();
+      if (
+        identificationType === "SA_ID"
+      ) {
+        params.set(
+          "saIdNumber",
+          cleanedSaId
+        );
+      } else {
+        params.set(
+          "passportNumber",
+          cleanedPassport
+        );
 
-      if (!response.ok || !result.success) {
+        params.set(
+          "passportCountry",
+          cleanedCountry
+        );
+      }
+
+      const response = await fetch(
+        `/api/revoke/lookup?${params.toString()}`
+      );
+
+      const result =
+        await response.json();
+
+      if (
+        !response.ok ||
+        !result.success
+      ) {
         throw new Error(
           result.error ||
             "Unable to check your DNR registration."
@@ -97,7 +214,8 @@ export default function RevokeDNRPage() {
       setLookupResult("error");
 
       setErrorMessage(
-        "We were unable to check your DNR registration. Please try again."
+        error?.message ||
+          "We were unable to check your DNR registration. Please try again."
       );
     } finally {
       setIsLoading(false);
@@ -108,11 +226,32 @@ export default function RevokeDNRPage() {
     event: React.ChangeEvent<HTMLInputElement>
   ) {
     setSaIdNumber(
-      event.target.value.replace(/\D/g, "").slice(0, 13)
+      event.target.value
+        .replace(/\D/g, "")
+        .slice(0, 13)
     );
 
-    setLookupResult(null);
-    setErrorMessage("");
+    resetLookupState();
+  }
+
+  function handlePassportChange(
+    event: React.ChangeEvent<HTMLInputElement>
+  ) {
+    setPassportNumber(
+      event.target.value
+    );
+
+    resetLookupState();
+  }
+
+  function handlePassportCountryChange(
+    event: React.ChangeEvent<HTMLSelectElement>
+  ) {
+    setPassportCountry(
+      event.target.value
+    );
+
+    resetLookupState();
   }
 
   function handleContinueToVerification() {
@@ -180,7 +319,9 @@ export default function RevokeDNRPage() {
 
     if (!idDocument) {
       setUploadError(
-        "Please select your identification document."
+        identificationType === "SA_ID"
+          ? "Please select your identification document."
+          : "Please select your passport document."
       );
 
       return;
@@ -193,9 +334,28 @@ export default function RevokeDNRPage() {
         new FormData();
 
       formData.append(
-        "saIdNumber",
-        saIdNumber
+        "identificationType",
+        identificationType
       );
+
+      if (
+        identificationType === "SA_ID"
+      ) {
+        formData.append(
+          "saIdNumber",
+          saIdNumber.trim()
+        );
+      } else {
+        formData.append(
+          "passportNumber",
+          passportNumber.trim()
+        );
+
+        formData.append(
+          "passportCountry",
+          passportCountry.trim()
+        );
+      }
 
       formData.append(
         "idDocument",
@@ -213,7 +373,10 @@ export default function RevokeDNRPage() {
       const result =
         await response.json();
 
-      if (!response.ok || !result.success) {
+      if (
+        !response.ok ||
+        !result.success
+      ) {
         throw new Error(
           result.error ||
             "Unable to upload your identification document."
@@ -230,8 +393,8 @@ export default function RevokeDNRPage() {
       );
 
       sessionStorage.setItem(
-        "mydnr-revocation-sa-id",
-        saIdNumber
+        "mydnr-revocation-identification-type",
+        identificationType
       );
     } catch (error: any) {
       console.error(
@@ -288,7 +451,8 @@ export default function RevokeDNRPage() {
         {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type":
+              "application/json",
           },
           body: JSON.stringify({
             revocationRequestId,
@@ -321,6 +485,15 @@ export default function RevokeDNRPage() {
       );
 
       sessionStorage.removeItem(
+        "mydnr-revocation-identification-type"
+      );
+
+      /*
+       * Remove the old legacy key as well,
+       * in case it exists from an earlier
+       * version of the revoke journey.
+       */
+      sessionStorage.removeItem(
         "mydnr-revocation-sa-id"
       );
 
@@ -344,6 +517,16 @@ export default function RevokeDNRPage() {
     confirmsVoluntaryRevocation &&
     understandsConsequences &&
     confirmsIdentityDocument;
+
+  const identityDocumentLabel =
+    identificationType === "SA_ID"
+      ? "South African identity document or Smart ID card"
+      : "passport";
+
+  const identityDocumentShortLabel =
+    identificationType === "SA_ID"
+      ? "Identification Document"
+      : "Passport Document";
 
   function getStepLabel() {
     if (currentStep === 1) {
@@ -485,8 +668,9 @@ export default function RevokeDNRPage() {
                     </h2>
 
                     <p className="mt-3 leading-7 text-slate-600">
-                      Enter your 13-digit South African ID number
-                      so we can locate your active DNR registration.
+                      Enter the identification details used
+                      when your DNR was registered so we can
+                      locate your active DNR registration.
                     </p>
                   </div>
 
@@ -497,39 +681,177 @@ export default function RevokeDNRPage() {
 
                 <form onSubmit={handleSubmit}>
 
-                  <label
-                    htmlFor="saIdNumber"
-                    className="mb-2 block text-sm font-semibold text-slate-900"
-                  >
-                    South African ID Number
-                  </label>
+                  <fieldset>
+                    <legend className="mb-3 block text-sm font-semibold text-slate-900">
+                      Identification Type
+                    </legend>
 
-                  <input
-                    id="saIdNumber"
-                    name="saIdNumber"
-                    type="text"
-                    inputMode="numeric"
-                    autoComplete="off"
-                    maxLength={13}
-                    value={saIdNumber}
-                    onChange={handleIdChange}
-                    placeholder="0000000000000"
-                    disabled={isLoading}
-                    className="w-full rounded-xl border border-blue-100 bg-white px-4 py-4 text-center text-xl font-semibold tracking-[0.18em] text-slate-900 outline-none transition placeholder:font-normal placeholder:text-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 sm:text-2xl sm:tracking-[0.28em]"
-                  />
+                    <div className="grid gap-3 sm:grid-cols-2">
 
-                  <div className="mt-2 flex items-start justify-between gap-4">
+                      <label
+                        className={`flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-4 transition ${
+                          identificationType === "SA_ID"
+                            ? "border-blue-500 bg-blue-50 ring-2 ring-blue-100"
+                            : "border-blue-100 bg-white hover:border-blue-200"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="identificationType"
+                          value="SA_ID"
+                          checked={
+                            identificationType === "SA_ID"
+                          }
+                          onChange={() =>
+                            handleIdentificationTypeChange(
+                              "SA_ID"
+                            )
+                          }
+                          disabled={isLoading}
+                          className="h-4 w-4 accent-blue-600"
+                        />
 
-                    <p className="text-sm leading-6 text-slate-500">
-                      Your ID number is used only to locate your
-                      existing MyDNR registration.
-                    </p>
+                        <span className="text-sm font-semibold text-slate-900">
+                          South African ID
+                        </span>
+                      </label>
 
-                    <span className="shrink-0 text-xs font-semibold text-slate-400">
-                      {saIdNumber.length}/13
-                    </span>
+                      <label
+                        className={`flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-4 transition ${
+                          identificationType === "PASSPORT"
+                            ? "border-blue-500 bg-blue-50 ring-2 ring-blue-100"
+                            : "border-blue-100 bg-white hover:border-blue-200"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="identificationType"
+                          value="PASSPORT"
+                          checked={
+                            identificationType === "PASSPORT"
+                          }
+                          onChange={() =>
+                            handleIdentificationTypeChange(
+                              "PASSPORT"
+                            )
+                          }
+                          disabled={isLoading}
+                          className="h-4 w-4 accent-blue-600"
+                        />
 
-                  </div>
+                        <span className="text-sm font-semibold text-slate-900">
+                          Passport
+                        </span>
+                      </label>
+
+                    </div>
+                  </fieldset>
+
+                  {identificationType === "SA_ID" && (
+                    <div className="mt-6">
+
+                      <label
+                        htmlFor="saIdNumber"
+                        className="mb-2 block text-sm font-semibold text-slate-900"
+                      >
+                        South African ID Number
+                      </label>
+
+                      <input
+                        id="saIdNumber"
+                        name="saIdNumber"
+                        type="text"
+                        inputMode="numeric"
+                        autoComplete="off"
+                        maxLength={13}
+                        value={saIdNumber}
+                        onChange={handleIdChange}
+                        placeholder="0000000000000"
+                        disabled={isLoading}
+                        className="w-full rounded-xl border border-blue-100 bg-white px-4 py-4 text-center text-xl font-semibold tracking-[0.18em] text-slate-900 outline-none transition placeholder:font-normal placeholder:text-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 sm:text-2xl sm:tracking-[0.28em]"
+                      />
+
+                      <div className="mt-2 flex items-start justify-between gap-4">
+
+                        <p className="text-sm leading-6 text-slate-500">
+                          Enter the 13-digit South African ID
+                          Number used when your DNR was
+                          registered.
+                        </p>
+
+                        <span className="shrink-0 text-xs font-semibold text-slate-400">
+                          {saIdNumber.length}/13
+                        </span>
+
+                      </div>
+                    </div>
+                  )}
+
+                  {identificationType === "PASSPORT" && (
+                    <div className="mt-6 space-y-5">
+
+                      <div>
+                        <label
+                          htmlFor="passportNumber"
+                          className="mb-2 block text-sm font-semibold text-slate-900"
+                        >
+                          Passport Number
+                        </label>
+
+                        <input
+                          id="passportNumber"
+                          name="passportNumber"
+                          type="text"
+                          autoComplete="off"
+                          value={passportNumber}
+                          onChange={handlePassportChange}
+                          disabled={isLoading}
+                          className="w-full rounded-xl border border-blue-100 bg-white px-4 py-4 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+                        />
+
+                        <p className="mt-2 text-sm leading-6 text-slate-500">
+                          Enter the Passport Number used when
+                          your DNR was registered.
+                        </p>
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor="passportCountry"
+                          className="mb-2 block text-sm font-semibold text-slate-900"
+                        >
+                          Country of Issue
+                        </label>
+
+                        <select
+                          id="passportCountry"
+                          name="passportCountry"
+                          value={passportCountry}
+                          onChange={
+                            handlePassportCountryChange
+                          }
+                          disabled={isLoading}
+                          className="w-full rounded-xl border border-blue-100 bg-white px-4 py-4 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+                        >
+                          <option value="">
+                            Select country
+                          </option>
+
+                          {COUNTRIES.map(
+                            (country) => (
+                              <option
+                                key={country}
+                                value={country}
+                              >
+                                {country}
+                              </option>
+                            )
+                          )}
+                        </select>
+                      </div>
+
+                    </div>
+                  )}
 
                   <button
                     type="submit"
@@ -560,8 +882,9 @@ export default function RevokeDNRPage() {
 
                         <p className="mt-2 text-sm leading-6 text-slate-600">
                           An active MyDNR registration was found
-                          for this ID number. Before the revocation
-                          can proceed, we need you to provide
+                          for the supplied identification
+                          details. Before the revocation can
+                          proceed, we need you to provide
                           identity evidence.
                         </p>
 
@@ -596,7 +919,8 @@ export default function RevokeDNRPage() {
 
                         <p className="mt-2 text-sm leading-6 text-slate-600">
                           We could not locate an active DNR
-                          registration for this ID number.
+                          registration for the supplied
+                          identification details.
                         </p>
                       </div>
 
@@ -665,8 +989,7 @@ export default function RevokeDNRPage() {
                     <p className="mt-3 leading-7 text-slate-600">
                       To help protect your DNR from unauthorised
                       removal, please upload a clear copy of your
-                      current South African identity document or
-                      Smart ID card.
+                      current {identityDocumentLabel}.
                     </p>
                   </div>
 
@@ -682,7 +1005,7 @@ export default function RevokeDNRPage() {
                       htmlFor="idDocument"
                       className="mb-3 block text-sm font-semibold text-slate-900"
                     >
-                      Identification Document
+                      {identityDocumentShortLabel}
                     </label>
 
                     <div className="rounded-2xl border-2 border-dashed border-blue-200 bg-[#fbfdff] p-6 text-center sm:p-8">
@@ -692,7 +1015,9 @@ export default function RevokeDNRPage() {
                       </div>
 
                       <p className="font-bold text-slate-900">
-                        Upload your identification document
+                        {identificationType === "SA_ID"
+                          ? "Upload your identification document"
+                          : "Upload your passport document"}
                       </p>
 
                       <p className="mt-2 text-sm leading-6 text-slate-500">
@@ -704,9 +1029,7 @@ export default function RevokeDNRPage() {
                         name="idDocument"
                         type="file"
                         accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
-                        onChange={
-                          handleFileChange
-                        }
+                        onChange={handleFileChange}
                         disabled={isUploading}
                         className="mt-5 block w-full text-sm text-slate-500 disabled:opacity-60"
                       />
@@ -717,7 +1040,7 @@ export default function RevokeDNRPage() {
                       <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
 
                         <p className="text-sm font-bold text-slate-900">
-                          ✓ Identification document selected
+                          ✓ {identityDocumentShortLabel} selected
                         </p>
 
                         <p className="mt-1 break-all text-sm text-slate-600">
@@ -752,7 +1075,9 @@ export default function RevokeDNRPage() {
                     >
                       {isUploading
                         ? "Uploading Securely..."
-                        : "Upload Identity Document"}
+                        : identificationType === "SA_ID"
+                          ? "Upload Identity Document"
+                          : "Upload Passport Document"}
                     </button>
 
                   </form>
@@ -774,7 +1099,7 @@ export default function RevokeDNRPage() {
                         </h3>
 
                         <p className="mt-2 text-sm leading-6 text-slate-600">
-                          Your identification document has been
+                          Your identity evidence has been
                           securely received and linked to this
                           revocation request.
                         </p>
@@ -804,15 +1129,17 @@ export default function RevokeDNRPage() {
             </div>
 
             <PrivacyNotice>
-              Your identification document is stored securely in
-              a private area and is used only as supporting
+              Your identity evidence is stored securely in a
+              private area and is used only as supporting
               evidence for this revocation request.
             </PrivacyNotice>
 
             <BackButton
               label="Back to Step 1"
               disabled={isUploading}
-              onClick={() => setCurrentStep(1)}
+              onClick={() =>
+                setCurrentStep(1)
+              }
             />
           </>
         )}
@@ -917,7 +1244,9 @@ export default function RevokeDNRPage() {
                   onClick={
                     handleContinueToConfirmation
                   }
-                  disabled={!revocationRequestId}
+                  disabled={
+                    !revocationRequestId
+                  }
                   className="mt-3 w-full rounded-xl bg-blue-600 px-6 py-4 font-bold text-white shadow-md transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Continue to Final Confirmation
@@ -928,7 +1257,9 @@ export default function RevokeDNRPage() {
 
             <BackButton
               label="Back to Step 2"
-              onClick={() => setCurrentStep(2)}
+              onClick={() =>
+                setCurrentStep(2)
+              }
             />
           </>
         )}
@@ -967,7 +1298,9 @@ export default function RevokeDNRPage() {
               <div className="space-y-5 px-6 py-8 sm:px-9 sm:py-10">
 
                 <Declaration
-                  checked={confirmsVoluntaryRevocation}
+                  checked={
+                    confirmsVoluntaryRevocation
+                  }
                   disabled={isRevoking}
                   onChange={
                     setConfirmsVoluntaryRevocation
@@ -978,7 +1311,9 @@ export default function RevokeDNRPage() {
                 </Declaration>
 
                 <Declaration
-                  checked={understandsConsequences}
+                  checked={
+                    understandsConsequences
+                  }
                   disabled={isRevoking}
                   onChange={
                     setUnderstandsConsequences
@@ -991,15 +1326,17 @@ export default function RevokeDNRPage() {
                 </Declaration>
 
                 <Declaration
-                  checked={confirmsIdentityDocument}
+                  checked={
+                    confirmsIdentityDocument
+                  }
                   disabled={isRevoking}
                   onChange={
                     setConfirmsIdentityDocument
                   }
                 >
-                  I confirm that the identification document
-                  I supplied belongs to me and was provided
-                  by me for this revocation request.
+                  I confirm that the identity evidence I
+                  supplied belongs to me and was provided by
+                  me for this revocation request.
                 </Declaration>
 
                 <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-6">
@@ -1043,7 +1380,9 @@ export default function RevokeDNRPage() {
 
                 <button
                   type="button"
-                  onClick={handleConfirmRevocation}
+                  onClick={
+                    handleConfirmRevocation
+                  }
                   disabled={
                     !allDeclarationsConfirmed ||
                     isRevoking
@@ -1069,7 +1408,9 @@ export default function RevokeDNRPage() {
             <BackButton
               label="Back to Step 3"
               disabled={isRevoking}
-              onClick={() => setCurrentStep(3)}
+              onClick={() =>
+                setCurrentStep(3)
+              }
             />
           </>
         )}
@@ -1360,7 +1701,9 @@ function Declaration({
           checked={checked}
           disabled={disabled}
           onChange={(event) =>
-            onChange(event.target.checked)
+            onChange(
+              event.target.checked
+            )
           }
           className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer accent-blue-600 disabled:cursor-not-allowed"
         />

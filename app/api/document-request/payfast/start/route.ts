@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 
+type IdentificationType = "SA_ID" | "PASSPORT";
+
 function pfHost(mode: string | undefined) {
   return mode === "live"
     ? "www.payfast.co.za"
@@ -59,18 +61,61 @@ export async function POST(req: Request) {
       .trim()
       .toLowerCase();
 
+    const identificationType = String(
+      body?.identificationType || ""
+    )
+      .trim()
+      .toUpperCase() as IdentificationType;
+
     const saIdNumber = String(
       body?.saIdNumber || ""
+    ).trim();
+
+    const passportNumber = String(
+      body?.passportNumber || ""
+    ).trim();
+
+    const passportCountry = String(
+      body?.passportCountry || ""
     ).trim();
 
     if (
       !requestId ||
       !requestorName ||
-      !requestorEmail ||
-      !saIdNumber
+      !requestorEmail
     ) {
       return new NextResponse(
         "Missing document request details",
+        { status: 400 }
+      );
+    }
+
+    if (
+      identificationType !== "SA_ID" &&
+      identificationType !== "PASSPORT"
+    ) {
+      return new NextResponse(
+        "Invalid identification type",
+        { status: 400 }
+      );
+    }
+
+    if (
+      identificationType === "SA_ID" &&
+      !/^\d{13}$/.test(saIdNumber)
+    ) {
+      return new NextResponse(
+        "Invalid South African ID Number",
+        { status: 400 }
+      );
+    }
+
+    if (
+      identificationType === "PASSPORT" &&
+      (!passportNumber || !passportCountry)
+    ) {
+      return new NextResponse(
+        "Missing passport details",
         { status: 400 }
       );
     }
@@ -126,6 +171,11 @@ export async function POST(req: Request) {
     const payfastUrl =
       `https://${pfHost(mode)}/eng/process`;
 
+    const identityReference =
+      identificationType === "SA_ID"
+        ? saIdNumber
+        : passportNumber;
+
     const fields: Record<string, string> = {
       merchant_id,
       merchant_key,
@@ -144,10 +194,11 @@ export async function POST(req: Request) {
       item_description:
         "DNR Document Retrieval Fee",
 
-      custom_str1: saIdNumber,
+      custom_str1: identityReference,
       custom_str2: requestorEmail,
       custom_str3: requestorName,
       custom_str4: requestId,
+      custom_str5: identificationType,
     };
 
     const signature = buildSignature(

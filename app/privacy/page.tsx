@@ -67,7 +67,7 @@ export default function Page() {
         <div className="space-y-8 rounded-[28px] border border-blue-100 bg-white p-6 shadow-[0_18px_55px_rgba(15,40,80,0.06)] sm:p-10">
           <Section title={'Who is responsible for your information'}>
             <p>MyDNR South Africa is operated by <strong>[MyDNR South Africa]</strong>, the responsible party for personal information processed through this service.</p>
-            <p>Information Officer: <strong>[M Thompson CIO/CDO]</strong><br />Email: <strong>[info@mydnr.co.za]</strong><br />Physical address: <strong>[Plot 128, Zwavelpoort, Pretoria, South Africa]</strong></p>
+            <p> <strong></strong><br />Email: <strong>[info@mydnr.co.za]</strong><br />Physical address: <strong>[Plot 128, Zwavelpoort, Pretoria, South Africa]</strong></p>
           </Section>
           <Section title={'Information we may collect'}>
             <p>Depending on the service you use, we may collect identifying and contact information, South African ID details, identity-document copies, signed DNR documentation, information supplied by a person requesting a registered document, consent and declaration records, payment and transaction references, and technical or audit information needed to operate and secure the service.</p>
