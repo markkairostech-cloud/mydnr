@@ -91,13 +91,33 @@ export default function RegisterDocumentsPage() {
         body: formData,
       });
 
-      const result = await response.json();
+        const responseText = await response.text();
 
-      if (!response.ok || !result.success) {
-        throw new Error(
-          result.error || "Document upload failed."
-        );
-      }
+        let result: any = null;
+
+        try {
+          result = JSON.parse(responseText);
+        } catch {
+          result = null;
+        }
+
+        if (!response.ok) {
+          if (response.status === 413) {
+            throw new Error(
+              "The uploaded documents are too large. Please choose smaller files and try again."
+            );
+          }
+
+          throw new Error(
+            result?.error || "Document upload failed. Please try again."
+          );
+        }
+
+        if (!result?.success) {
+          throw new Error(
+            result?.error || "Document upload failed."
+          );
+        }
 
       if (
         !result.uploadSessionId ||
