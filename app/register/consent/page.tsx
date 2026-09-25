@@ -33,9 +33,19 @@ export default function ConsentPage() {
       localStorage.getItem("mydnr-registration") || "{}"
     );
 
+    const validIdentityPresent =
+      existingData.identificationType === "SA_ID"
+        ? Boolean(existingData.saIdNumber)
+        : existingData.identificationType === "PASSPORT"
+          ? Boolean(
+              existingData.passportNumber &&
+              existingData.passportCountry
+            )
+          : false;
+
     const requiredRegistrationDataPresent =
       existingData.fullName &&
-      existingData.saIdNumber &&
+      validIdentityPresent &&
       existingData.dateOfBirth &&
       existingData.email &&
       existingData.mobileNumber;
@@ -103,7 +113,7 @@ export default function ConsentPage() {
       checked: consent5,
       setChecked: setConsent5,
       text:
-        "I understand that someone who knows my South African ID Number may check whether I have a DNR record registered with MyDNR and may request access to my registered DNR document through the MyDNR retrieval process.",
+        "I understand that someone who knows the identification details used for my registration may check whether I have a DNR record registered with MyDNR and may request access to my registered DNR document through the MyDNR retrieval process.",
     },
   ];
 
