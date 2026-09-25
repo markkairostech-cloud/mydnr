@@ -1,9 +1,29 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
+type IdentificationType = "SA_ID" | "PASSPORT";
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
+
+    const identificationType = String(
+      body?.identificationType || ""
+    )
+      .trim()
+      .toUpperCase() as IdentificationType;
+
+    const saIdNumber = String(
+      body?.saIdNumber || ""
+    ).trim();
+
+    const passportNumber = String(
+      body?.passportNumber || ""
+    ).trim();
+
+    const passportCountry = String(
+      body?.passportCountry || ""
+    ).trim();
 
     const uploadSessionId = String(
       body?.uploadSessionId || ""
@@ -16,6 +36,70 @@ export async function POST(req: Request) {
     const dnrDocumentPath = String(
       body?.dnrDocumentPath || ""
     ).trim();
+
+    /*
+     * Validate the participant identity.
+     *
+     * A registration must use exactly one
+     * supported identification method:
+     *
+     * SA_ID:
+     * - South African ID number
+     *
+     * PASSPORT:
+     * - Passport number
+     * - Country of issue
+     */
+    if (
+      identificationType !== "SA_ID" &&
+      identificationType !== "PASSPORT"
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "A valid identification type is required.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (
+      identificationType === "SA_ID" &&
+      !saIdNumber
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "South African ID number is required.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (
+      identificationType === "PASSPORT" &&
+      (
+        !passportNumber ||
+        !passportCountry
+      )
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Passport number and country of issue are required.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
 
     if (!uploadSessionId) {
       return NextResponse.json(
@@ -149,6 +233,10 @@ export async function POST(req: Request) {
 
     /*
      * 2. Create the DNR registration.
+     *
+     * Only the identity fields belonging
+     * to the selected identification type
+     * are stored.
      */
     const {
       data: registration,
@@ -160,8 +248,23 @@ export async function POST(req: Request) {
           full_name:
             body.fullName,
 
+          identification_type:
+            identificationType,
+
           sa_id_number:
-            body.saIdNumber,
+            identificationType === "SA_ID"
+              ? saIdNumber
+              : null,
+
+          passport_number:
+            identificationType === "PASSPORT"
+              ? passportNumber
+              : null,
+
+          passport_country:
+            identificationType === "PASSPORT"
+              ? passportCountry
+              : null,
 
           date_of_birth:
             body.dateOfBirth,

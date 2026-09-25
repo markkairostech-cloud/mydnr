@@ -24,9 +24,19 @@ export default function PaymentPage() {
       return;
     }
 
+    const validIdentityPresent =
+      registration.identificationType === "SA_ID"
+        ? Boolean(registration.saIdNumber)
+        : registration.identificationType === "PASSPORT"
+          ? Boolean(
+              registration.passportNumber &&
+              registration.passportCountry
+            )
+          : false;
+
     const requiredParticipantDataPresent =
       registration.fullName &&
-      registration.saIdNumber &&
+      validIdentityPresent &&
       registration.dateOfBirth &&
       registration.email &&
       registration.mobileNumber;
@@ -92,7 +102,19 @@ export default function PaymentPage() {
           registrationId,
           fullName: registration.fullName,
           email: registration.email,
-          saIdNumber: registration.saIdNumber,
+          identificationType: registration.identificationType,
+          saIdNumber:
+            registration.identificationType === "SA_ID"
+              ? registration.saIdNumber
+              : null,
+          passportNumber:
+            registration.identificationType === "PASSPORT"
+              ? registration.passportNumber
+              : null,
+          passportCountry:
+            registration.identificationType === "PASSPORT"
+              ? registration.passportCountry
+              : null,
         }),
       });
 
@@ -135,6 +157,41 @@ export default function PaymentPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const inputIdentitySummary = () => {
+    if (!registration) {
+      return null;
+    }
+
+    if (registration.identificationType === "PASSPORT") {
+      return (
+        <>
+          <p>
+            <span className="font-semibold text-slate-800">
+              Passport Number:
+            </span>{" "}
+            {registration.passportNumber}
+          </p>
+
+          <p>
+            <span className="font-semibold text-slate-800">
+              Country of Issue:
+            </span>{" "}
+            {registration.passportCountry}
+          </p>
+        </>
+      );
+    }
+
+    return (
+      <p>
+        <span className="font-semibold text-slate-800">
+          ID Number:
+        </span>{" "}
+        {registration.saIdNumber}
+      </p>
+    );
   };
 
   return (
@@ -262,12 +319,9 @@ export default function PaymentPage() {
                     </p>
 
                     <div className="mt-3 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
-                      <p>
-                        <span className="font-semibold text-slate-800">
-                          ID Number:
-                        </span>{" "}
-                        {registration.saIdNumber}
-                      </p>
+                      <div className="space-y-2">
+                        {inputIdentitySummary()}
+                      </div>
 
                       <p className="break-all">
                         <span className="font-semibold text-slate-800">

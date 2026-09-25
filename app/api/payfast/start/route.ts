@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 
+type IdentificationType = "SA_ID" | "PASSPORT";
+
 function pfHost(mode: string | undefined) {
   return mode === "live"
     ? "www.payfast.co.za"
@@ -55,22 +57,78 @@ export async function POST(req: Request) {
       .trim()
       .toLowerCase();
 
-    const saIdNumber = String(
-      body?.saIdNumber || ""
-    ).trim();
-
     const registrationId = String(
       body?.registrationId || ""
     ).trim();
 
+    const identificationType = String(
+      body?.identificationType || ""
+    )
+      .trim()
+      .toUpperCase() as IdentificationType;
+
+    const saIdNumber = String(
+      body?.saIdNumber || ""
+    ).trim();
+
+    const passportNumber = String(
+      body?.passportNumber || ""
+    ).trim();
+
+    const passportCountry = String(
+      body?.passportCountry || ""
+    ).trim();
+
+    /*
+     * Validate the core payment details.
+     */
     if (
       !registrationId ||
       !fullName ||
-      !email ||
-      !saIdNumber
+      !email
     ) {
       return new NextResponse(
         "Missing participant details",
+        { status: 400 }
+      );
+    }
+
+    /*
+     * Validate the selected identity type.
+     */
+    if (
+      identificationType !== "SA_ID" &&
+      identificationType !== "PASSPORT"
+    ) {
+      return new NextResponse(
+        "Invalid identification type",
+        { status: 400 }
+      );
+    }
+
+    /*
+     * Validate the identity fields belonging
+     * to the selected identification type.
+     */
+    if (
+      identificationType === "SA_ID" &&
+      !saIdNumber
+    ) {
+      return new NextResponse(
+        "Missing South African ID number",
+        { status: 400 }
+      );
+    }
+
+    if (
+      identificationType === "PASSPORT" &&
+      (
+        !passportNumber ||
+        !passportCountry
+      )
+    ) {
+      return new NextResponse(
+        "Missing passport details",
         { status: 400 }
       );
     }
@@ -129,6 +187,17 @@ export async function POST(req: Request) {
     const payfastUrl =
       `https://${pfHost(mode)}/eng/process`;
 
+    /*
+     * IMPORTANT:
+     *
+     * The registration ID is the authoritative
+     * reference connecting PayFast back to MyDNR.
+     *
+     * Identity information is included only as
+     * supplementary metadata. The ITN must retrieve
+     * the authoritative identity from the database
+     * using m_payment_id / registrationId.
+     */
     const fields: Record<string, string> = {
       merchant_id,
       merchant_key,
@@ -142,10 +211,22 @@ export async function POST(req: Request) {
       item_name: "MyDNR Registration",
       item_description:
         "DNR Registration Fee",
-      custom_str1: saIdNumber,
-      custom_str2: email,
-      custom_str3: fullName,
-      custom_str4: registrationId,
+
+      custom_str1:
+        identificationType,
+
+      custom_str2:
+        identificationType === "SA_ID"
+          ? saIdNumber
+          : passportNumber,
+
+      custom_str3:
+        identificationType === "PASSPORT"
+          ? passportCountry
+          : "",
+
+      custom_str4:
+        registrationId,
     };
 
     const signature = buildSignature(
@@ -160,6 +241,7 @@ export async function POST(req: Request) {
         signature,
       },
     });
+
   } catch {
     return new NextResponse(
       "Bad request",

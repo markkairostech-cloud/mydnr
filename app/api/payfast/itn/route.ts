@@ -4,6 +4,15 @@ import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 const EXPECTED_REGISTRATION_AMOUNT = 400.0;
 
+type IdentificationType = "SA_ID" | "PASSPORT";
+
+type RegistrationIdentity = {
+  identificationType: IdentificationType;
+  saIdNumber: string | null;
+  passportNumber: string | null;
+  passportCountry: string | null;
+};
+
 /*
  * IMPORTANT:
  *
@@ -198,25 +207,97 @@ async function ensureStorageObjectDeleted(
 }
 
 /*
- * Remove any older DNR registrations belonging
- * to the same SA ID number.
+ * Validate and normalize the authoritative
+ * identity stored on the registration row.
  *
- * IMPORTANT:
- *
- * Documents are deleted and verified FIRST.
- * Only after that do we delete the old database row.
+ * PayFast custom fields are NOT used as the
+ * source of truth for identity.
  */
-async function supersedeOlderRegistrations(
+function getRegistrationIdentity(
+  registration: {
+    identification_type: string | null;
+    sa_id_number: string | null;
+    passport_number: string | null;
+    passport_country: string | null;
+  }
+): RegistrationIdentity {
+  const identificationType =
+    String(
+      registration.identification_type || ""
+    )
+      .trim()
+      .toUpperCase();
+
+  if (identificationType === "SA_ID") {
+    const saIdNumber =
+      String(
+        registration.sa_id_number || ""
+      ).trim();
+
+    if (!saIdNumber) {
+      throw new Error(
+        "SA ID registration does not contain a South African ID number."
+      );
+    }
+
+    return {
+      identificationType: "SA_ID",
+      saIdNumber,
+      passportNumber: null,
+      passportCountry: null,
+    };
+  }
+
+  if (identificationType === "PASSPORT") {
+    const passportNumber =
+      String(
+        registration.passport_number || ""
+      ).trim();
+
+    const passportCountry =
+      String(
+        registration.passport_country || ""
+      ).trim();
+
+    if (
+      !passportNumber ||
+      !passportCountry
+    ) {
+      throw new Error(
+        "Passport registration does not contain complete passport details."
+      );
+    }
+
+    return {
+      identificationType: "PASSPORT",
+      saIdNumber: null,
+      passportNumber,
+      passportCountry,
+    };
+  }
+
+  throw new Error(
+    "Registration does not contain a valid identification type."
+  );
+}
+
+/*
+ * Build a query containing all registrations
+ * belonging to the same authoritative identity.
+ *
+ * SA ID:
+ *   sa_id_number
+ *
+ * Passport:
+ *   passport_number + passport_country
+ */
+function registrationsForIdentity(
   supabase: ReturnType<
     typeof getSupabaseAdmin
   >,
-  currentRegistrationId: string,
-  saIdNumber: string
+  identity: RegistrationIdentity
 ) {
-  const {
-    data: olderRegistrations,
-    error: olderRegistrationsError,
-  } = await supabase
+  let query = supabase
     .from("dnr_registrations")
     .select(
       `
@@ -226,10 +307,97 @@ async function supersedeOlderRegistrations(
         payment_status,
         registration_status
       `
+    );
+
+  if (
+    identity.identificationType === "SA_ID"
+  ) {
+    return query
+      .eq(
+        "identification_type",
+        "SA_ID"
+      )
+      .eq(
+        "sa_id_number",
+        identity.saIdNumber as string
+      );
+  }
+
+  return query
+    .eq(
+      "identification_type",
+      "PASSPORT"
     )
-    .eq("sa_id_number", saIdNumber)
-    .neq("id", currentRegistrationId)
-    .neq("registration_status", "superseded");
+    .eq(
+      "passport_number",
+      identity.passportNumber as string
+    )
+    .eq(
+      "passport_country",
+      identity.passportCountry as string
+    );
+}
+
+/*
+ * Create the identity fields used by audit_logs.
+ */
+function buildAuditIdentity(
+  identity: RegistrationIdentity
+) {
+  if (
+    identity.identificationType === "SA_ID"
+  ) {
+    return {
+      identification_type: "SA_ID",
+      sa_id_number:
+        identity.saIdNumber,
+      passport_number: null,
+      passport_country: null,
+    };
+  }
+
+  return {
+    identification_type: "PASSPORT",
+    sa_id_number: null,
+    passport_number:
+      identity.passportNumber,
+    passport_country:
+      identity.passportCountry,
+  };
+}
+
+/*
+ * Supersede any older DNR registrations belonging
+ * to the same authoritative identity.
+ *
+ * IMPORTANT:
+ *
+ * Documents are deleted and verified FIRST.
+ * Only after that is the historical registration
+ * marked as superseded.
+ */
+async function supersedeOlderRegistrations(
+  supabase: ReturnType<
+    typeof getSupabaseAdmin
+  >,
+  currentRegistrationId: string,
+  identity: RegistrationIdentity
+) {
+  const {
+    data: olderRegistrations,
+    error: olderRegistrationsError,
+  } = await registrationsForIdentity(
+    supabase,
+    identity
+  )
+    .neq(
+      "id",
+      currentRegistrationId
+    )
+    .neq(
+      "registration_status",
+      "superseded"
+    );
 
   if (olderRegistrationsError) {
     throw olderRegistrationsError;
@@ -247,13 +415,19 @@ async function supersedeOlderRegistrations(
     olderRegistrations.length
   );
 
-  for (const oldRegistration of olderRegistrations) {
+  for (
+    const oldRegistration
+    of olderRegistrations
+  ) {
     console.log(
       "PAYFAST ITN: superseding registration:",
       oldRegistration.id
     );
 
-    // Delete and independently verify removal of the old sensitive documents.
+    /*
+     * Delete and independently verify removal
+     * of the old sensitive documents.
+     */
     await ensureStorageObjectDeleted(
       supabase,
       "id-documents",
@@ -266,19 +440,31 @@ async function supersedeOlderRegistrations(
       oldRegistration.dnr_document_path
     );
 
-    // Keep the historical DB row for audit/FK integrity, but make it
-    // non-authoritative. The document-path columns are NOT NULL, so the
-    // historical path values remain even though the Storage objects are gone.
+    /*
+     * Keep the historical DB row for audit/FK
+     * integrity, but make it non-authoritative.
+     *
+     * The document-path columns are NOT NULL,
+     * so the historical path values remain even
+     * though the Storage objects are gone.
+     */
     const {
       data: supersededRegistration,
       error: supersedeError,
     } = await supabase
       .from("dnr_registrations")
       .update({
-        registration_status: "superseded",
+        registration_status:
+          "superseded",
       })
-      .eq("id", oldRegistration.id)
-      .neq("registration_status", "superseded")
+      .eq(
+        "id",
+        oldRegistration.id
+      )
+      .neq(
+        "registration_status",
+        "superseded"
+      )
       .select("id")
       .maybeSingle();
 
@@ -288,24 +474,39 @@ async function supersedeOlderRegistrations(
       );
     }
 
-    // A concurrent/retried ITN may already have completed this row.
+    /*
+     * A concurrent/retried ITN may already
+     * have completed this row.
+     */
     if (!supersededRegistration) {
       const {
         data: currentOldRegistration,
-        error: currentOldRegistrationError,
+        error:
+          currentOldRegistrationError,
       } = await supabase
         .from("dnr_registrations")
-        .select("id, registration_status")
-        .eq("id", oldRegistration.id)
+        .select(
+          "id, registration_status"
+        )
+        .eq(
+          "id",
+          oldRegistration.id
+        )
         .maybeSingle();
 
-      if (currentOldRegistrationError) {
-        throw currentOldRegistrationError;
+      if (
+        currentOldRegistrationError
+      ) {
+        throw (
+          currentOldRegistrationError
+        );
       }
 
       if (
         !currentOldRegistration ||
-        currentOldRegistration.registration_status !== "superseded"
+        currentOldRegistration
+          .registration_status !==
+          "superseded"
       ) {
         throw new Error(
           `Registration ${oldRegistration.id} could not be confirmed as superseded.`
@@ -316,20 +517,38 @@ async function supersedeOlderRegistrations(
         "PAYFAST ITN: registration already superseded:",
         oldRegistration.id
       );
+
       continue;
     }
 
-    const { error: auditError } = await supabase
+    const auditIdentity =
+      buildAuditIdentity(identity);
+
+    const {
+      error: auditError,
+    } = await supabase
       .from("audit_logs")
       .insert([
         {
-          event_type: "dnr_registration_superseded",
-          sa_id_number: saIdNumber,
-          registration_id: oldRegistration.id,
+          event_type:
+            "dnr_registration_superseded",
+
+          ...auditIdentity,
+
+          registration_id:
+            oldRegistration.id,
+
           previous_status:
-            oldRegistration.registration_status || null,
-          new_status: "superseded",
-          documents_deleted: true,
+            oldRegistration
+              .registration_status ||
+            null,
+
+          new_status:
+            "superseded",
+
+          documents_deleted:
+            true,
+
           details:
             `Registration superseded by newer paid registration ${currentRegistrationId}. Historical registration metadata was retained for audit and referential integrity. Original identification and DNR documents were securely deleted and deletion was verified.`,
         },
@@ -348,12 +567,61 @@ async function supersedeOlderRegistrations(
   }
 }
 
+/*
+ * Confirm that exactly one paid + active
+ * registration exists for the authoritative
+ * identity, and that it is the newly paid
+ * registration.
+ */
+async function verifyAuthoritativeRegistration(
+  supabase: ReturnType<
+    typeof getSupabaseAdmin
+  >,
+  registrationId: string,
+  identity: RegistrationIdentity
+) {
+  const {
+    data: authoritativeRegistrations,
+    error: authoritativeError,
+  } = await registrationsForIdentity(
+    supabase,
+    identity
+  )
+    .eq(
+      "payment_status",
+      "paid"
+    )
+    .eq(
+      "registration_status",
+      "active"
+    );
+
+  if (authoritativeError) {
+    throw authoritativeError;
+  }
+
+  if (
+    !authoritativeRegistrations ||
+    authoritativeRegistrations.length !==
+      1 ||
+    authoritativeRegistrations[0].id !==
+      registrationId
+  ) {
+    throw new Error(
+      "Registration cleanup did not leave exactly one authoritative paid and active DNR registration."
+    );
+  }
+}
+
 export async function POST(req: Request) {
-  console.log("PAYFAST ITN: received");
+  console.log(
+    "PAYFAST ITN: received"
+  );
 
   try {
     /*
-     * Read the raw application/x-www-form-urlencoded
+     * Read the raw
+     * application/x-www-form-urlencoded
      * body sent by PayFast.
      */
     const body =
@@ -363,31 +631,47 @@ export async function POST(req: Request) {
       new URLSearchParams(body);
 
     const paymentStatus =
-      params.get("payment_status");
+      params.get(
+        "payment_status"
+      );
 
     const registrationId =
-      params.get("m_payment_id");
+      params.get(
+        "m_payment_id"
+      );
 
     const payfastPaymentId =
-      params.get("pf_payment_id");
+      params.get(
+        "pf_payment_id"
+      );
 
     const receivedMerchantId =
-      params.get("merchant_id");
+      params.get(
+        "merchant_id"
+      );
 
     const amountGross =
-      params.get("amount_gross");
+      params.get(
+        "amount_gross"
+      );
 
     const receivedSignature =
-      params.get("signature");
+      params.get(
+        "signature"
+      );
 
     const configuredMerchantId =
       String(
-        process.env.PAYFAST_MERCHANT_ID || ""
+        process.env
+          .PAYFAST_MERCHANT_ID ||
+          ""
       ).trim();
 
     const passphrase =
       String(
-        process.env.PAYFAST_PASSPHRASE || ""
+        process.env
+          .PAYFAST_PASSPHRASE ||
+          ""
       ).trim();
 
     console.log(
@@ -403,7 +687,9 @@ export async function POST(req: Request) {
     /*
      * 1. Payment status
      */
-    if (paymentStatus !== "COMPLETE") {
+    if (
+      paymentStatus !== "COMPLETE"
+    ) {
       console.log(
         "PAYFAST ITN: ignored - payment not complete"
       );
@@ -511,12 +797,15 @@ export async function POST(req: Request) {
     const calculatedSignature =
       buildItnSignature(
         params,
-        passphrase || undefined
+        passphrase ||
+          undefined
       );
 
     if (
-      calculatedSignature.toLowerCase() !==
-      receivedSignature.toLowerCase()
+      calculatedSignature
+        .toLowerCase() !==
+      receivedSignature
+        .toLowerCase()
     ) {
       console.error(
         "PAYFAST ITN: rejected - invalid signature"
@@ -584,8 +873,13 @@ export async function POST(req: Request) {
     /*
      * 6. Find the incoming registration.
      *
-     * We need the SA ID number because it becomes
-     * the control key for removing older records.
+     * The registration ID supplied through
+     * m_payment_id is the authoritative link
+     * back to MyDNR.
+     *
+     * Identity is then loaded from our own
+     * database rather than trusted from
+     * PayFast custom fields.
      */
     const supabase =
       getSupabaseAdmin();
@@ -598,7 +892,10 @@ export async function POST(req: Request) {
       .select(
         `
           id,
+          identification_type,
           sa_id_number,
+          passport_number,
+          passport_country,
           payment_status,
           payment_reference,
           paid_at,
@@ -632,25 +929,28 @@ export async function POST(req: Request) {
       "PAYFAST ITN: registration found"
     );
 
-    if (
-      !registration.sa_id_number
-    ) {
-      throw new Error(
-        "Registration does not contain a South African ID number."
+    const identity =
+      getRegistrationIdentity(
+        registration
       );
-    }
+
+    console.log(
+      "PAYFAST ITN: registration identity validated:",
+      identity.identificationType
+    );
 
     /*
      * 7. Payment idempotency.
      *
-     * Unlike the old implementation, we DO NOT
-     * immediately return if the registration is
-     * already paid.
+     * We DO NOT immediately return if the
+     * registration is already paid.
      *
-     * A previous ITN attempt may have marked the
-     * new registration paid and then failed while
-     * cleaning old records. A PayFast retry must
-     * therefore be allowed to finish that cleanup.
+     * A previous ITN attempt may have marked
+     * the new registration paid and then
+     * failed while cleaning old records.
+     *
+     * A PayFast retry must therefore be
+     * allowed to finish that cleanup.
      */
     if (
       registration.payment_status !==
@@ -705,13 +1005,15 @@ export async function POST(req: Request) {
       );
     } else {
       /*
-       * Protect against a different PayFast payment
-       * reference being used against an already-paid
-       * registration.
+       * Protect against a different PayFast
+       * payment reference being used against
+       * an already-paid registration.
        */
       if (
-        registration.payment_reference &&
-        registration.payment_reference !==
+        registration
+          .payment_reference &&
+        registration
+          .payment_reference !==
           payfastPaymentId
       ) {
         console.error(
@@ -732,50 +1034,41 @@ export async function POST(req: Request) {
     }
 
     /*
-     * 8. Supersede every other registration belonging
-     *    to this SA ID number.
+     * 8. Supersede every other registration
+     * belonging to this same authoritative
+     * identity.
      *
-     * Historical rows remain for audit and foreign-key
-     * integrity, while only the newly paid registration
-     * remains authoritative.
+     * SA ID registrations match by:
+     *   sa_id_number
+     *
+     * Passport registrations match by:
+     *   passport_number + passport_country
+     *
+     * Historical rows remain for audit and
+     * foreign-key integrity, while only the
+     * newly paid registration remains
+     * authoritative.
      */
     await supersedeOlderRegistrations(
       supabase,
       registrationId,
-      registration.sa_id_number
+      identity
     );
 
     /*
-     * 9. Final proof that there is exactly one
-     *    authoritative paid + active registration
-     *    for this SA ID, and that it is the newly
-     *    paid registration.
+     * 9. Final proof that there is exactly
+     * one authoritative paid + active
+     * registration for this identity, and
+     * that it is the newly paid registration.
      *
-     * Historical superseded rows may remain by design.
+     * Historical superseded rows may remain
+     * by design.
      */
-    const {
-      data: authoritativeRegistrations,
-      error: authoritativeError,
-    } = await supabase
-      .from("dnr_registrations")
-      .select("id, payment_status, registration_status")
-      .eq("sa_id_number", registration.sa_id_number)
-      .eq("payment_status", "paid")
-      .eq("registration_status", "active");
-
-    if (authoritativeError) {
-      throw authoritativeError;
-    }
-
-    if (
-      !authoritativeRegistrations ||
-      authoritativeRegistrations.length !== 1 ||
-      authoritativeRegistrations[0].id !== registrationId
-    ) {
-      throw new Error(
-        "Registration cleanup did not leave exactly one authoritative paid and active DNR registration."
-      );
-    }
+    await verifyAuthoritativeRegistration(
+      supabase,
+      registrationId,
+      identity
+    );
 
     console.log(
       "PAYFAST ITN: one authoritative paid + active registration confirmed"
@@ -795,7 +1088,8 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error(
       "PAYFAST ITN ERROR:",
-      error?.message || error
+      error?.message ||
+        error
     );
 
     return new NextResponse(
