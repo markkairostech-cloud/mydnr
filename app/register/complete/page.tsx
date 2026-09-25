@@ -508,10 +508,8 @@ function RegistrationCompleteContent() {
           </p>
 
           <p className="text-slate-600 leading-relaxed">
-            Your DNR record can now be verified using your
-            South African ID Number and your registered DNR
-            document can be securely retrieved when it may
-            be needed.
+            Your DNR record can now be verified using the identification details used for your registration
+            details used for your registration.
           </p>
 
         </div>
@@ -572,8 +570,8 @@ function RegistrationCompleteContent() {
           </p>
 
           <p className="text-slate-600 leading-relaxed">
-            Make sure someone you trust knows your South
-            African ID Number and understands your wishes,
+            Make sure someone you trust knows your identification details
+            used when you registerd and understands your wishes,
             so they know where to look should your DNR
             document ever be needed and you are unable to
             communicate for yourself.
